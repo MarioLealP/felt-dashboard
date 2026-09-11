@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smell:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # version comes from package.json "packageManager"
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: format (oxfmt)
+        run: pnpm fmt:check
+
+      - name: lint (oxlint)
+        run: pnpm lint
+
+      - name: types (tsc)
+        run: pnpm typecheck
+
+      - name: test (vitest)
+        run: pnpm test
+
+      - name: build (vite)
+        run: pnpm build

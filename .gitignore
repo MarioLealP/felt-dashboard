@@ -1,0 +1,10 @@
+node_modules
+dist
+coverage
+*.local
+.vite
+.DS_Store
+*.log
+
+# Environment-specific config — never commit real values
+.env

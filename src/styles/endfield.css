@@ -1,0 +1,924 @@
+/* ===========================================================================
+   ENDFIELD DESIGN SYSTEM  ·  endfield.css  ·  v1.1  ·  2026-08-30
+   clockmost // design authority  ·  rebuilt from a study of the
+   Arknights: Endfield interface. Not affiliated with Hypergryph.
+
+   USAGE
+     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Jost:ital,wght@0,400;0,500;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap">
+     @layer tokens, base, motif, components, utilities;
+     @import "endfield.css";
+     <html data-theme="dark">   <!-- "light" = DOC · this is a committed dark design -->
+
+   Build with tokens (var(--ef-*)), never literals.
+   Panels/cards/buttons: clip-path: var(--ef-chamfer)  (top-right + bottom-left cut).
+   =========================================================================== */
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ENDFIELD DESIGN SYSTEM · endfield.css
+   Rebuilt 2026-08-30 from the game HUD, the official gryphline.com stylesheets,
+   the touying-endfield theme and the ReEnd component study.
+
+   Everything under @layer tokens / base / motif / components / utilities is the
+   portable sheet. The @layer page rules after it are this document only.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@layer tokens, base, motif, components, utilities;
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+@layer tokens {
+  :root {
+    /* ── Signature hues — fixed ─────────────────────────────────────────── */
+    --ef-yellow:     #FFFA00;   /* the one accent. Structure, focus, energy.   */
+    --ef-yellow-hot: #FDFD1F;   /* hover / emission                            */
+    --ef-cyan:       #00FFA2;   /* data · connectivity · OK — used sparingly   */
+    --ef-magenta:    #FF1AAC;   /* alert · highlight — used sparingly          */
+    --ef-crimson:    #D91E36;   /* editorial category banners only             */
+
+    /* ── HUD — the operating surface (default) ──────────────────────────── */
+    --ef-ground:     #0F0F10;   /* the void. Faint cool cast, not OLED black.  */
+    --ef-surface:    #17181A;   /* panels, cards                              */
+    --ef-surface-2:  #1E2024;   /* raised / nested — cooler                   */
+    --ef-well:       #0A0A0B;   /* inset fields, code, sunken                 */
+    --ef-line:       #33363C;   /* the STEEL — every border + inactive state.  */
+    --ef-line-2:     #4A4E56;   /* hover edge, emphasised divider             */
+
+    --ef-ink:        #F0F0F2;   /* primary text — cool near-white             */
+    --ef-ink-2:      #A8ABB2;   /* secondary                                  */
+    --ef-ink-3:      #6C6F76;   /* muted labels, captions                     */
+    --ef-ink-4:      #44474D;   /* disabled, faint rules                      */
+
+    --ef-accent:      var(--ef-yellow);
+    --ef-accent-ink:  var(--ef-yellow);  /* accent AS text — flips in DOC     */
+    --ef-marker:      var(--ef-yellow);  /* thin state marks — dark gold in DOC */
+    --ef-on-accent:   #0F0F10;           /* text on a yellow fill             */
+    --ef-link:        #67B2E0;
+
+    --ef-ok:   var(--ef-cyan);
+    --ef-warn: var(--ef-yellow);
+    --ef-crit: var(--ef-magenta);
+
+    /* ── Extended hues — the game leans on these past the core three ────── */
+    --ef-orange: #FF7A1A;   /* notification squares · power draw / consumption */
+    --ef-green:  #7BE04B;   /* "important" · online · confirm · ascension      */
+    --ef-blue:   #4FA8FF;   /* stat deltas · secondary numerics               */
+    --ef-notify: var(--ef-orange);
+    --ef-online: var(--ef-green);
+
+    /* data-viz roles — the DOC-mode yield / usage reports (g70, g71) */
+    --ef-data-yield:   var(--ef-yellow);
+    --ef-data-usage:   var(--ef-cyan);
+    --ef-data-deficit: var(--ef-crimson);
+
+    /* item-rarity spine — the bottom border on inventory tiles (g52, g77) */
+    --ef-rarity-1: var(--ef-ink-3);
+    --ef-rarity-2: #6BD98C;
+    --ef-rarity-3: #4FA8FF;
+    --ef-rarity-4: #B37DFF;
+    --ef-rarity-5: #FFD84D;
+    --ef-rarity-6: #FFB020;
+
+    --ef-skew: -8deg;   /* the parallelogram menu-tile shear                  */
+    /* CMYK glitch strip — the triband's louder cousin, for reward/gacha edges */
+    --ef-glitchstrip: linear-gradient(90deg,
+      var(--ef-cyan) 0 22%, var(--ef-yellow) 22% 50%,
+      var(--ef-crimson) 50% 74%, var(--ef-magenta) 74% 100%);
+
+    /* ── Type ──────────────────────────────────────────────────────────── */
+    --ef-font-display: "Chakra Petch", "Bahnschrift", "DIN Alternate", system-ui, sans-serif;
+    --ef-font-body:    "Jost", "Century Gothic", "Futura", system-ui, sans-serif;
+    --ef-font-mono:    "JetBrains Mono", ui-monospace, "Consolas", monospace;
+    /* Authentic upgrade if licensed: Novecentosanswide (display) + Gilroy (body). */
+
+    --ef-t-11: 0.6875rem; --ef-t-12: 0.75rem;  --ef-t-13: 0.8125rem;
+    --ef-t-14: 0.875rem;  --ef-t-16: 1rem;     --ef-t-18: 1.125rem;
+    --ef-t-21: 1.3125rem; --ef-t-26: 1.625rem; --ef-t-34: 2.125rem;
+    --ef-t-46: 2.875rem;  --ef-t-72: 4.5rem;
+
+    --ef-track-label:  0.14em;   /* uppercase mono labels                     */
+    --ef-track-tight: -0.005em;  /* large display                            */
+    --ef-track-wide:   0.3em;    /* wordmark                                  */
+
+    /* ── Space — 4px base ─────────────────────────────────────────────── */
+    --ef-1: 4px; --ef-2: 8px; --ef-3: 12px; --ef-4: 16px;
+    --ef-5: 24px; --ef-6: 36px; --ef-7: 56px; --ef-8: 88px; --ef-9: 128px;
+
+    /* ── Structure ────────────────────────────────────────────────────── */
+    --ef-radius:  0px;    /* fully sharp. The chamfer carries the character.  */
+    --ef-cut:     10px;   /* corner chamfer depth                            */
+    --ef-cut-lg:  16px;
+    --ef-bw:      1px;    /* the hairline — most containers are just this     */
+    --ef-bw-2:    2px;
+    --ef-rail:    3px;    /* active leading edge                             */
+
+    --ef-bracket-size:  14px;
+    --ef-bracket-w:     2px;
+    --ef-bracket-color: color-mix(in srgb, var(--ef-yellow) 55%, transparent);
+
+    /* ── Motion ───────────────────────────────────────────────────────── */
+    --ef-ease:     cubic-bezier(1, 0, 0.7, 1);      /* snap — the game's curve */
+    --ef-ease-out: cubic-bezier(0.16, 1, 0.3, 1);   /* settle                  */
+    --ef-dur-1: 0.12s; --ef-dur-2: 0.28s; --ef-dur-3: 0.6s;
+
+    --ef-glow:      0 0 0.55rem rgba(255, 250, 0, 0.4);
+    --ef-glow-soft: 0 0 1.25rem rgba(255, 250, 0, 0.12);
+
+    /* the tri-colour brand mark — official gradient. Use ONCE per view. */
+    --ef-triband: linear-gradient(90deg,
+      var(--ef-magenta) 0, var(--ef-magenta) 2rem,
+      var(--ef-cyan)    0, var(--ef-cyan)    4rem,
+      var(--ef-yellow)  0, var(--ef-yellow)  100%);
+    --ef-triband-v: linear-gradient(180deg,
+      var(--ef-magenta) 0, var(--ef-magenta) 1.5rem,
+      var(--ef-cyan)    0, var(--ef-cyan)    3rem,
+      var(--ef-yellow)  0, rgba(255,250,0,0) 100%);
+
+    /* the two-corner chamfer — top-right + bottom-left */
+    --ef-chamfer: polygon(
+      0 0,
+      calc(100% - var(--ef-cut)) 0,
+      100% var(--ef-cut),
+      100% 100%,
+      var(--ef-cut) 100%,
+      0 calc(100% - var(--ef-cut)));
+
+    color-scheme: dark;
+  }
+
+  /* This is a committed dark-HUD design. The page defaults to HUD for every
+     viewer regardless of OS; DOC (the light "document" surface, seen on
+     official operator art over light grounds) is opt-in via [data-theme="light"]
+     and gets a full contrast pass of its own. */
+  :root[data-theme="light"] {
+    --ef-ground:    #F6F6F3;
+    --ef-surface:   #FFFFFF;
+    --ef-surface-2: #ECECE8;
+    --ef-well:      #E2E2DD;
+    --ef-line:      #BFC1C7;
+    --ef-line-2:    #8E9098;
+    --ef-ink:       #141519;   /* primary text                                */
+    --ef-ink-2:     #34363D;   /* secondary                                   */
+    --ef-ink-3:     #55575F;   /* muted — still ~7:1 on white                  */
+    --ef-ink-4:     #7E818A;   /* faint, but legible                          */
+    --ef-accent-ink:#141519;   /* yellow text fails on white — becomes near-black */
+    --ef-marker:    #7A6D00;   /* dark gold — thin marks stay legible on white */
+    --ef-on-accent: #0F0F10;
+    --ef-link:      #185FA0;
+    --ef-orange:    #C85A00;   /* darkened so it holds on white               */
+    --ef-green:     #2E7D32;
+    --ef-blue:      #1565C0;
+    --ef-bracket-color: color-mix(in srgb, #141519 50%, transparent);
+    --ef-glow: 0 0 0 1px rgba(20,21,25,0.16);
+    --ef-glow-soft: 0 2px 14px rgba(20,21,25,0.12);
+    color-scheme: light;
+  }
+  :root[data-theme="dark"] {
+    --ef-ground:#0F0F10; --ef-surface:#17181A; --ef-surface-2:#1E2024; --ef-well:#0A0A0B;
+    --ef-line:#33363C; --ef-line-2:#4A4E56;
+    --ef-ink:#F0F0F2; --ef-ink-2:#A8ABB2; --ef-ink-3:#6C6F76; --ef-ink-4:#44474D;
+    --ef-accent-ink:var(--ef-yellow); --ef-marker:var(--ef-yellow); --ef-on-accent:#0F0F10; --ef-link:#67B2E0;
+    --ef-orange:#FF7A1A; --ef-green:#7BE04B; --ef-blue:#4FA8FF;
+    --ef-bracket-color: color-mix(in srgb, var(--ef-yellow) 55%, transparent);
+    --ef-glow: 0 0 .55rem rgba(255,250,0,.4); --ef-glow-soft: 0 0 1.25rem rgba(255,250,0,.12);
+    color-scheme: dark;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+  * { margin: 0; }
+
+  body {
+    background: var(--ef-ground);
+    color: var(--ef-ink);
+    font-family: var(--ef-font-body);
+    font-size: var(--ef-t-16);
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--ef-font-display);
+    font-weight: 600;
+    line-height: 1.04;
+    letter-spacing: var(--ef-track-tight);
+    text-transform: uppercase;
+    text-wrap: balance;
+    color: var(--ef-ink);
+  }
+  h1 { font-size: clamp(2.25rem, 6vw, var(--ef-t-72)); font-weight: 700; }
+  h2 { font-size: var(--ef-t-26); }
+  h3 { font-size: var(--ef-t-21); }
+  h4 { font-size: var(--ef-t-14); letter-spacing: var(--ef-track-label); color: var(--ef-ink-2); }
+
+  p  { max-width: 64ch; }
+  a  { color: var(--ef-link); text-decoration: none;
+       border-bottom: 1px solid color-mix(in srgb, var(--ef-link) 35%, transparent);
+       transition: border-color var(--ef-dur-1); }
+  a:hover { border-bottom-color: var(--ef-link); }
+  strong { color: var(--ef-ink); font-weight: 500; }
+  em { font-style: italic; color: var(--ef-ink); }
+  code, kbd, samp { font-family: var(--ef-font-mono); font-size: 0.9em; }
+
+  :focus-visible { outline: var(--ef-bw-2) solid var(--ef-accent); outline-offset: 3px; }
+  ::selection { background: var(--ef-yellow); color: #0F0F10; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* ═══ @layer motif — the marks that make it Endfield ═══════════════════════ */
+@layer motif {
+  /* two-corner chamfer */
+  .ef-chamfer { clip-path: var(--ef-chamfer); }
+
+  /* corner brackets — TL + BR diagonal pair, offset just outside */
+  .ef-brackets { position: relative; }
+  .ef-brackets::before, .ef-brackets::after {
+    content: ""; position: absolute;
+    width: var(--ef-bracket-size); height: var(--ef-bracket-size);
+    border: var(--ef-bracket-w) solid var(--ef-bracket-color);
+    pointer-events: none;
+  }
+  .ef-brackets::before { top: -1px;  left: -1px;  border-right: 0; border-bottom: 0; }
+  .ef-brackets::after  { bottom: -1px; right: -1px; border-left: 0;  border-top: 0; }
+
+  /* the diamond marker — hollow available / filled active */
+  .ef-diamond {
+    display: inline-block; width: 0.6rem; height: 0.6rem;
+    border: var(--ef-bw-2) solid var(--ef-ink-3);
+    transform: rotate(45deg);
+    flex-shrink: 0;
+    transition: background var(--ef-dur-1) var(--ef-ease), border-color var(--ef-dur-1) var(--ef-ease);
+  }
+  .ef-diamond[data-active] { background: var(--ef-marker); border-color: var(--ef-marker); box-shadow: var(--ef-glow); }
+  .ef-diamond--sm { width: 0.4rem; height: 0.4rem; border-width: 1px; }
+
+  /* chevron run — ‹‹‹‹  ››››  directional decoration */
+  .ef-chevrons {
+    display: inline-flex; gap: 2px; color: var(--ef-ink-4);
+    font-family: var(--ef-font-mono); font-size: var(--ef-t-11); letter-spacing: -0.1em;
+    user-select: none;
+  }
+  .ef-chevrons[data-run] span { animation: ef-chev 1.4s var(--ef-ease-out) infinite; }
+  .ef-chevrons[data-run] span:nth-child(2) { animation-delay: 0.12s; }
+  .ef-chevrons[data-run] span:nth-child(3) { animation-delay: 0.24s; }
+  .ef-chevrons[data-run] span:nth-child(4) { animation-delay: 0.36s; }
+
+  /* segmented data strip — barcode-ish edge texture */
+  .ef-datastrip {
+    height: 8px;
+    background: repeating-linear-gradient(90deg,
+      var(--ef-line) 0 3px, transparent 3px 5px,
+      var(--ef-line) 5px 6px, transparent 6px 11px,
+      var(--ef-ink-4) 11px 13px, transparent 13px 18px);
+    opacity: 0.7;
+  }
+
+  /* dot-matrix, faded off the edge */
+  .ef-dots {
+    background-image: radial-gradient(color-mix(in srgb, var(--ef-ink) 14%, transparent) 1px, transparent 1px);
+    background-size: 1.4rem 1.4rem;
+    -webkit-mask-image: linear-gradient(180deg, transparent, #000 20%, #000 80%, transparent);
+            mask-image: linear-gradient(180deg, transparent, #000 20%, #000 80%, transparent);
+  }
+  .ef-halftone {
+    background-image: radial-gradient(currentColor 22%, transparent 23%);
+    background-size: 0.5rem 0.5rem;
+    -webkit-mask-image: linear-gradient(90deg, #000 30%, transparent);
+            mask-image: linear-gradient(90deg, #000 30%, transparent);
+  }
+
+  /* fade-to-glow divider — line that lights in the middle and fades at both ends */
+  .ef-rule { height: 1px; border: 0; background: var(--ef-line); }
+  .ef-rule--glow { background: linear-gradient(90deg, transparent, var(--ef-marker) 50%, transparent); opacity: 0.75; }
+  .ef-rule--tri  { height: var(--ef-rail); background: var(--ef-triband); }
+
+  /* the glitch echo — apply to a wrapper, put the text in data-text */
+  .ef-echo { position: relative; display: inline-block; margin-top: 0.45em; }
+  .ef-echo::before {
+    content: attr(data-text);
+    position: absolute; left: 0; top: -0.36em;
+    color: var(--ef-accent-ink); opacity: 0.18;
+    clip-path: polygon(0 0,100% 0,100% 34%,0 34%, 0 58%,100% 58%,100% 74%,0 74%);
+    transform: translateX(2px) scaleX(1.01);
+    pointer-events: none; white-space: nowrap;
+  }
+
+  /* microtext block — decorative telemetry */
+  .ef-micro {
+    font-family: var(--ef-font-mono); font-size: 7px; line-height: 1.4;
+    color: var(--ef-ink-4); letter-spacing: 0.05em; user-select: none;
+  }
+
+  @keyframes ef-chev { 0%,100%{opacity:.25;transform:translateX(0)} 50%{opacity:1;transform:translateX(2px)} }
+  @keyframes ef-breathe { 0%,100%{opacity:1;transform:rotate(45deg) scale(1)} 50%{opacity:.4;transform:rotate(45deg) scale(.8)} }
+  @keyframes ef-dspin { to { transform: rotate(405deg); } }
+  @keyframes ef-wipe { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+  @keyframes ef-glitch {
+    0%,100%{transform:translate(0)} 20%{transform:translate(-1px,1px)} 40%{transform:translate(-1px,-1px)}
+    60%{transform:translate(1px,1px)} 80%{transform:translate(1px,-1px)}
+  }
+  @keyframes ef-scan { to { transform: translate(-50%); } }
+}
+
+/* ═══ @layer components ═══════════════════════════════════════════════════ */
+@layer components {
+
+  /* ── labels + values ────────────────────────────────────────────────── */
+  .ef-label {
+    font-family: var(--ef-font-mono); font-size: var(--ef-t-11); font-weight: 500;
+    letter-spacing: var(--ef-track-label); text-transform: uppercase; color: var(--ef-ink-3);
+  }
+  .ef-value {
+    font-family: var(--ef-font-mono); font-weight: 700;
+    font-variant-numeric: tabular-nums; color: var(--ef-accent-ink);
+  }
+
+  /* ── section head — SEC.NN // TITLE ─────────────────────────────────── */
+  .ef-sec-head {
+    display: flex; align-items: baseline; gap: var(--ef-3);
+    padding-bottom: var(--ef-3); position: relative;
+    border-bottom: 1px solid var(--ef-line);
+  }
+  .ef-sec-head::after { content: ""; position: absolute; left: 0; bottom: -1px; width: 3rem; height: 2px; background: var(--ef-marker); }
+  .ef-sec-head .ef-idx { font-family: var(--ef-font-mono); font-size: var(--ef-t-12); font-weight: 700; color: var(--ef-accent-ink); letter-spacing: 0.05em; }
+  .ef-sec-head .ef-idx::after { content: " //"; color: var(--ef-ink-4); }
+
+  /* ── panel / card — a hairline outlined, chamfered container ────────── */
+  .ef-panel {
+    background: var(--ef-surface);
+    border: var(--ef-bw) solid var(--ef-line);
+    clip-path: var(--ef-chamfer);
+    padding: var(--ef-5);
+  }
+  .ef-card {
+    position: relative;
+    background: var(--ef-surface);
+    border: var(--ef-bw) solid var(--ef-line);
+    clip-path: var(--ef-chamfer);
+    padding: var(--ef-4);
+    transition: border-color var(--ef-dur-2) var(--ef-ease), background var(--ef-dur-2) var(--ef-ease);
+  }
+  .ef-card:hover { border-color: var(--ef-line-2); }
+  .ef-card[data-active] { border-color: var(--ef-accent); box-shadow: var(--ef-glow-soft); }
+  .ef-card__head { display: flex; align-items: center; gap: var(--ef-3); margin-bottom: var(--ef-3); }
+  .ef-card__title { font-family: var(--ef-font-display); font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; font-size: var(--ef-t-16); }
+  .ef-card__meta  { font-family: var(--ef-font-mono); font-size: var(--ef-t-11); color: var(--ef-ink-3); }
+
+  .ef-well {
+    background: var(--ef-well); border: var(--ef-bw) solid var(--ef-line);
+    padding: var(--ef-3) var(--ef-4);
+  }
+
+  /* icon plate */
+  .ef-icon {
+    width: 2.2rem; height: 2.2rem; flex-shrink: 0;
+    display: grid; place-items: center;
+    background: var(--ef-surface-2); border: 1px solid var(--ef-line);
+    clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+    color: var(--ef-accent-ink);
+  }
+  .ef-icon svg { width: 1.15rem; height: 1.15rem; }
+
+  /* ── buttons — outline by default, one fill per group ───────────────── */
+  .ef-btn {
+    position: relative;
+    display: inline-flex; align-items: center; gap: var(--ef-2);
+    font-family: var(--ef-font-mono); font-size: var(--ef-t-12); font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 0.62rem 1.15rem;
+    color: var(--ef-ink); background: transparent;
+    border: var(--ef-bw) solid var(--ef-line-2);
+    clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
+    cursor: pointer;
+    transition: color var(--ef-dur-1) var(--ef-ease), border-color var(--ef-dur-1) var(--ef-ease), background var(--ef-dur-1) var(--ef-ease);
+  }
+  .ef-btn:hover { border-color: var(--ef-accent); color: var(--ef-accent-ink); background: color-mix(in srgb, var(--ef-yellow) 6%, transparent); }
+  .ef-btn:active { background: color-mix(in srgb, var(--ef-yellow) 12%, transparent); }
+
+  .ef-btn--primary { background: var(--ef-accent); color: var(--ef-on-accent); border-color: var(--ef-accent); }
+  .ef-btn--primary:hover { background: var(--ef-yellow-hot); color: var(--ef-on-accent); box-shadow: var(--ef-glow); }
+  .ef-btn--ghost { border-color: transparent; }
+  .ef-btn--ghost:hover { border-color: transparent; background: color-mix(in srgb, var(--ef-yellow) 8%, transparent); }
+  .ef-btn--danger { border-color: color-mix(in srgb, var(--ef-magenta) 60%, transparent); color: var(--ef-magenta); }
+  .ef-btn--danger:hover { border-color: var(--ef-magenta); color: var(--ef-magenta); background: color-mix(in srgb, var(--ef-magenta) 8%, transparent); }
+  .ef-btn:disabled, .ef-btn[aria-disabled="true"] { opacity: 0.4; pointer-events: none; }
+
+  /* loading — a chamfered box that spins, not a circle */
+  .ef-spinner {
+    width: 0.9rem; height: 0.9rem; flex-shrink: 0;
+    border: var(--ef-bw-2) solid currentColor;
+    clip-path: polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px));
+    animation: ef-dspin 0.8s linear infinite;
+  }
+
+  /* ── fields ─────────────────────────────────────────────────────────── */
+  .ef-field { display: flex; flex-direction: column; gap: var(--ef-2); }
+  .ef-input, .ef-select, .ef-textarea {
+    font-family: var(--ef-font-mono); font-size: var(--ef-t-13); color: var(--ef-ink);
+    background: var(--ef-well); border: 1px solid var(--ef-line);
+    padding: 0.6rem 0.75rem;
+    transition: border-color var(--ef-dur-1), box-shadow var(--ef-dur-1);
+  }
+  .ef-textarea { resize: vertical; min-height: 4.5rem; font-family: var(--ef-font-body); }
+  .ef-input:focus, .ef-select:focus, .ef-textarea:focus {
+    outline: none; border-color: var(--ef-accent);
+    box-shadow: inset 0 0 0 1px var(--ef-accent), var(--ef-glow-soft);
+  }
+  .ef-input::placeholder { color: var(--ef-ink-4); }
+
+  /* toggle — the thumb is a small chamfered block; spins on switch */
+  .ef-toggle { position: relative; display: inline-block; width: 2.7rem; height: 1.35rem; flex-shrink: 0; }
+  .ef-toggle input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+  .ef-toggle > span { position: absolute; inset: 0; background: var(--ef-well); border: 1px solid var(--ef-line); transition: background var(--ef-dur-2) var(--ef-ease), border-color var(--ef-dur-2); }
+  .ef-toggle > span::before {
+    content: ""; position: absolute; width: 0.85rem; height: 0.85rem; left: 3px; top: 50%;
+    transform: translateY(-50%) rotate(0deg); background: var(--ef-ink-3);
+    clip-path: polygon(0 0, calc(100% - 3px) 0, 100% 3px, 100% 100%, 3px 100%, 0 calc(100% - 3px));
+    transition: transform var(--ef-dur-2) var(--ef-ease), background var(--ef-dur-2);
+  }
+  .ef-toggle input:checked + span { background: var(--ef-marker); border-color: var(--ef-marker); }
+  .ef-toggle input:checked + span::before { transform: translate(1.35rem, -50%) rotate(90deg); background: #0F0F10; }
+  .ef-toggle input:focus-visible + span { outline: 2px solid var(--ef-accent); outline-offset: 2px; }
+
+  /* range */
+  .ef-range { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; background: var(--ef-line); cursor: pointer; }
+  .ef-range::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 16px; background: var(--ef-marker); box-shadow: var(--ef-glow); clip-path: polygon(50% 0, 100% 30%, 100% 100%, 0 100%, 0 30%); }
+  .ef-range::-moz-range-thumb { width: 12px; height: 16px; border: 0; background: var(--ef-marker); box-shadow: var(--ef-glow); }
+  .ef-range:focus-visible { outline: 2px solid var(--ef-accent); outline-offset: 5px; }
+
+  /* checkbox = diamond; radio = diamond too, per the game */
+  .ef-check { display: inline-flex; align-items: center; gap: var(--ef-2); font-family: var(--ef-font-mono); font-size: var(--ef-t-12); color: var(--ef-ink-2); cursor: pointer; }
+  .ef-check input { appearance: none; -webkit-appearance: none; width: 0.85rem; height: 0.85rem; border: var(--ef-bw-2) solid var(--ef-line-2); transform: rotate(45deg); cursor: pointer; transition: background var(--ef-dur-1), border-color var(--ef-dur-1); }
+  .ef-check input:checked { background: var(--ef-marker); border-color: var(--ef-marker); box-shadow: var(--ef-glow); }
+  .ef-check input:focus-visible { outline: 2px solid var(--ef-accent); outline-offset: 3px; }
+
+  /* ── status pill ────────────────────────────────────────────────────── */
+  .ef-pill {
+    display: inline-flex; align-items: center; gap: var(--ef-2);
+    font-family: var(--ef-font-mono); font-size: var(--ef-t-11); letter-spacing: 0.08em; text-transform: uppercase;
+    background: transparent; border: 1px solid var(--ef-line);
+    padding: 0.28rem 0.7rem; color: var(--ef-ink-2);
+  }
+  .ef-pill .ef-diamond { width: 0.42rem; height: 0.42rem; border-width: 0; background: var(--ef-ok); box-shadow: 0 0 6px var(--ef-ok); }
+  .ef-pill[data-state="warn"] .ef-diamond { background: var(--ef-warn); box-shadow: 0 0 6px var(--ef-warn); }
+  .ef-pill[data-state="crit"] .ef-diamond { background: var(--ef-crit); box-shadow: 0 0 6px var(--ef-crit); }
+
+  /* ── badge / tag ────────────────────────────────────────────────────── */
+  .ef-badge {
+    font-family: var(--ef-font-mono); font-size: var(--ef-t-11); font-weight: 700;
+    letter-spacing: 0.06em; text-transform: uppercase; padding: 0.12rem 0.42rem;
+    border: 1px solid currentColor;
+  }
+  .ef-badge--ok   { color: var(--ef-ok); }
+  .ef-badge--warn { color: var(--ef-accent-ink); border-color: var(--ef-yellow); }
+  .ef-badge--crit { color: var(--ef-crit); }
+  .ef-tag { font-family: var(--ef-font-mono); font-size: var(--ef-t-11); color: var(--ef-ink-3); background: var(--ef-well); border: 1px solid var(--ef-line); padding: 0.18rem 0.5rem; }
+
+  /* ── category banner (key-art motif) ───────────────────────────────── */
+  .ef-banner {
+    display: inline-flex; align-items: center; gap: var(--ef-2);
+    font-family: var(--ef-font-display); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+    color: #fff; background: var(--ef-crimson);
+    padding: 0.28rem 1.1rem 0.28rem 0.7rem;
+    clip-path: polygon(0 0, 100% 0, calc(100% - 0.7rem) 100%, 0 100%);
+  }
+  .ef-banner::before { content: "▽"; font-size: 0.7em; opacity: 0.85; }
+  .ef-banner .ef-slash { font-family: var(--ef-font-mono); opacity: 0.55; }
+
+  /* ── table ─────────────────────────────────────────────────────────── */
+  .ef-table-wrap { overflow-x: auto; border: 1px solid var(--ef-line); }
+  .ef-table { width: 100%; border-collapse: collapse; font-size: var(--ef-t-13); }
+  .ef-table th {
+    font-family: var(--ef-font-mono); font-size: var(--ef-t-11); font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; text-align: left; color: var(--ef-ink-2);
+    background: var(--ef-surface-2); padding: 0.55rem 0.85rem; border-bottom: 1px solid var(--ef-line);
+  }
+  .ef-table td { padding: 0.55rem 0.85rem; border-bottom: 1px solid var(--ef-line); color: var(--ef-ink-2); font-variant-numeric: tabular-nums; }
+  .ef-table tbody tr:last-child td { border-bottom: 0; }
+  .ef-table tbody tr:hover td { background: color-mix(in srgb, var(--ef-yellow) 4%, transparent); color: var(--ef-ink); }
+
+  /* ── log rows ──────────────────────────────────────────────────────── */
+  .ef-log { display: flex; flex-direction: column; font-family: var(--ef-font-mono); font-size: var(--ef-t-12); }
+  .ef-log__row {
+    display: grid; grid-template-columns: auto auto 1fr; gap: var(--ef-3);
+    padding: 0.45rem 0.75rem; color: var(--ef-ink-2);
+    border-left: var(--ef-rail) solid var(--ef-line); border-bottom: 1px solid var(--ef-line);
+  }
+  .ef-log__row:last-child { border-bottom: 0; }
+  .ef-log__row[data-level="ok"]   { border-left-color: var(--ef-ok); }
+  .ef-log__row[data-level="warn"] { border-left-color: var(--ef-warn); }
+  .ef-log__row[data-level="crit"] { border-left-color: var(--ef-crit); }
+  .ef-log__ts  { color: var(--ef-ink-4); }
+  .ef-log__tag { color: var(--ef-accent-ink); }
+
+  /* ── progress + meter ──────────────────────────────────────────────── */
+  .ef-progress { display: flex; flex-direction: column; gap: var(--ef-2); }
+  .ef-progress__head { display: flex; justify-content: space-between; }
+  .ef-progress__track { height: 6px; background: var(--ef-well); border: 1px solid var(--ef-line); overflow: hidden; }
+  .ef-progress__fill { height: 100%; background: var(--ef-marker); transition: width var(--ef-dur-3) var(--ef-ease-out); }
+
+  .ef-meter { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 2px; height: 1.2rem; }
+  .ef-meter__seg { background: var(--ef-line); }
+  .ef-meter__seg[data-on] { background: var(--ef-marker); }
+  .ef-meter__seg[data-on][data-hot] { background: var(--ef-magenta); }
+
+  /* ── stat ─────────────────────────────────────────────────────────── */
+  .ef-stat { display: flex; flex-direction: column; gap: 0.1rem; }
+  .ef-stat__num { font-family: var(--ef-font-mono); font-weight: 700; font-size: var(--ef-t-34); line-height: 1; color: var(--ef-accent-ink); font-variant-numeric: tabular-nums; }
+  .ef-stat__num--cyan { color: var(--ef-cyan); }
+  .ef-stat__unit { font-size: 0.5em; color: var(--ef-ink-3); }
+
+  /* ── tabs — underline ─────────────────────────────────────────────── */
+  .ef-tabs { display: flex; border-bottom: 1px solid var(--ef-line); }
+  .ef-tab {
+    font-family: var(--ef-font-mono); font-size: var(--ef-t-12); font-weight: 700; letter-spacing: 0.06em;
+    text-transform: uppercase; padding: 0.55rem 1rem; color: var(--ef-ink-3);
+    background: none; border: 0; border-bottom: var(--ef-bw-2) solid transparent; cursor: pointer; margin-bottom: -1px;
+    transition: color var(--ef-dur-1), border-color var(--ef-dur-1);
+  }
+  .ef-tab:hover { color: var(--ef-ink); }
+  .ef-tab[aria-selected="true"] { color: var(--ef-accent-ink); border-bottom-color: var(--ef-accent); }
+
+  /* ── callout ─────────────────────────────────────────────────────── */
+  .ef-callout {
+    display: flex; flex-direction: column; gap: var(--ef-2);
+    padding: var(--ef-3) var(--ef-4);
+    border: 1px solid var(--ef-line); border-left: var(--ef-rail) solid var(--ef-ink-3);
+    background: var(--ef-surface-2);
+  }
+  .ef-callout--do   { border-left-color: var(--ef-ok); }
+  .ef-callout--dont { border-left-color: var(--ef-crit); }
+  .ef-callout__label { font-family: var(--ef-font-mono); font-size: var(--ef-t-11); font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ef-ink-3); }
+
+  /* ── modal ───────────────────────────────────────────────────────── */
+  .ef-modal-demo { position: relative; height: 15rem; background: var(--ef-well); border: 1px solid var(--ef-line); overflow: hidden; display: grid; place-items: center; }
+  .ef-modal { width: min(24rem, 88%); background: var(--ef-surface); border: 1px solid var(--ef-accent); clip-path: var(--ef-chamfer); box-shadow: var(--ef-glow-soft); }
+  .ef-modal__head { display: flex; justify-content: space-between; align-items: center; padding: 0.65rem 1rem; background: var(--ef-ground); border-bottom: 1px solid var(--ef-line); }
+  .ef-modal__head h4 { font-family: var(--ef-font-mono); font-size: var(--ef-t-12); color: var(--ef-accent-ink); }
+  .ef-modal__body { padding: 1rem; font-size: var(--ef-t-13); color: var(--ef-ink-2); }
+
+  /* ── tooltip ─────────────────────────────────────────────────────── */
+  .ef-tip { position: relative; border-bottom: 1px dashed var(--ef-ink-3); cursor: help; }
+  .ef-tip::after {
+    content: attr(data-tip); position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%);
+    font-family: var(--ef-font-mono); font-size: var(--ef-t-11); white-space: nowrap;
+    background: var(--ef-ground); color: var(--ef-ink); border: 1px solid var(--ef-accent);
+    padding: 0.28rem 0.55rem; opacity: 0; pointer-events: none; transition: opacity var(--ef-dur-1);
+  }
+  .ef-tip:hover::after, .ef-tip:focus::after { opacity: 1; }
+
+  /* kbd + code */
+  kbd.ef-kbd { font-family: var(--ef-font-mono); font-size: var(--ef-t-11); background: var(--ef-surface-2); border: 1px solid var(--ef-line); border-bottom-width: 2px; padding: 0.08rem 0.38rem; color: var(--ef-ink-2); }
+  .ef-code {
+    font-family: var(--ef-font-mono); font-size: var(--ef-t-12); line-height: 1.75;
+    background: var(--ef-well); border: 1px solid var(--ef-line); border-left: var(--ef-bw-2) solid var(--ef-accent);
+    padding: var(--ef-4); overflow-x: auto; color: var(--ef-ink-2); white-space: pre;
+  }
+  .ef-code .c { color: var(--ef-ink-4); }
+  .ef-code .k { color: var(--ef-magenta); }
+  .ef-code .v { color: var(--ef-cyan); }
+  .ef-code .p { color: var(--ef-accent-ink); }
+}
+
+/* ═══ @layer utilities ═══════════════════════════════════════════════════ */
+@layer utilities {
+  .ef-mono { font-family: var(--ef-font-mono); }
+  .ef-up   { text-transform: uppercase; letter-spacing: var(--ef-track-label); }
+  .ef-nums { font-variant-numeric: tabular-nums; }
+  .ef-accent-c { color: var(--ef-accent-ink); }
+  .ef-cyan-c   { color: var(--ef-cyan); }
+  .ef-mag-c    { color: var(--ef-magenta); }
+  .ef-dim      { color: var(--ef-ink-3); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   v1.1 · GAME BACKPORT — marks + components seen across the full g01–g77
+   screenshot tour that v1.0 didn't carry. Same layers, same tokens.
+   Reference: GAME-UI-NOTES.md · IMAGE-ANALYSIS-*.md
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@layer motif {
+  /* registration crosshair — a survey "+". Pair with an .ef-micro code label. */
+  .ef-reg { position: relative; display: inline-block; width: 0.75rem; height: 0.75rem; flex-shrink: 0; color: var(--ef-ink-4); }
+  .ef-reg::before, .ef-reg::after { content: ""; position: absolute; background: currentColor; }
+  .ef-reg::before { left: 50%; top: 0; bottom: 0; width: 1px; margin-left: -0.5px; }
+  .ef-reg::after  { top: 50%; left: 0; right: 0; height: 1px; margin-top: -0.5px; }
+
+  /* four-corner survey frame — like .ef-brackets, but all four corners */
+  .ef-frame { position: relative; }
+  .ef-frame::before {
+    content: ""; position: absolute; inset: -2px; pointer-events: none;
+    --c: var(--ef-bracket-color);
+    background-image:
+      linear-gradient(var(--c) 0 0), linear-gradient(var(--c) 0 0),
+      linear-gradient(var(--c) 0 0), linear-gradient(var(--c) 0 0),
+      linear-gradient(var(--c) 0 0), linear-gradient(var(--c) 0 0),
+      linear-gradient(var(--c) 0 0), linear-gradient(var(--c) 0 0);
+    background-repeat: no-repeat;
+    background-position: 0 0, 0 0, 100% 0, 100% 0, 0 100%, 0 100%, 100% 100%, 100% 100%;
+    background-size: 12px 2px, 2px 12px, 12px 2px, 2px 12px, 12px 2px, 2px 12px, 12px 2px, 2px 12px;
+  }
+
+  /* diagonal hatch — "claimed / done" overlays, blocked buttons, deficit fills.
+     Tints to whatever the element's currentColor is. */
+  .ef-hatch {
+    background-image: repeating-linear-gradient(45deg,
+      transparent 0 5px, color-mix(in srgb, currentColor 22%, transparent) 5px 7px);
+  }
+
+  /* watermark stamp — a big outline word laid diagonally across a card */
+  .ef-stamp {
+    position: absolute; inset: 0; display: grid; place-items: center;
+    font-family: var(--ef-font-display); font-weight: 700; text-transform: uppercase;
+    font-size: clamp(1.5rem, 7vw, 3rem); letter-spacing: 0.12em;
+    color: transparent; -webkit-text-stroke: 1px var(--ef-ink-4);
+    transform: rotate(-16deg); opacity: 0.55; pointer-events: none; user-select: none;
+  }
+
+  /* faceted frame — an octagon clip for anything that must not be a plain circle
+     (minimap, avatars, skill buttons — a genuine Endfield tell) */
+  .ef-facet { clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%); }
+
+  /* CMYK glitch strip — one per view, max, like the triband */
+  .ef-glitchstrip { height: 4px; background: var(--ef-glitchstrip); }
+  .ef-glitchstrip--v {
+    height: auto; width: 4px; align-self: stretch;   /* needs a flex parent */
+    background: linear-gradient(180deg,
+      var(--ef-cyan) 0 22%, var(--ef-yellow) 22% 50%,
+      var(--ef-crimson) 50% 74%, var(--ef-magenta) 74% 100%);
+  }
+
+  /* vertical dividers — plain, and the red-spine + cyan-hairline split (g19) */
+  .ef-vrule { width: 1px; align-self: stretch; background: var(--ef-line); }
+  .ef-vrule--split { width: var(--ef-bw-2); background: var(--ef-crimson); box-shadow: 1px 0 0 var(--ef-cyan); }
+
+  /* notification square — the tilted orange corner pip on any menu entry */
+  .ef-notif {
+    position: absolute; top: -3px; right: -3px;
+    width: 0.5rem; height: 0.5rem; background: var(--ef-notify);
+    transform: rotate(12deg);
+    box-shadow: 0 0 6px color-mix(in srgb, var(--ef-notify) 55%, transparent);
+  }
+  .ef-notif--inline { position: static; display: inline-block; }
+
+  /* key hint — [E] [TAB] [F10] as a span (kbd.ef-kbd's inline twin) */
+  .ef-key {
+    font-family: var(--ef-font-mono); font-size: var(--ef-t-11);
+    background: var(--ef-surface-2); border: 1px solid var(--ef-line); border-bottom-width: 2px;
+    padding: 0.02rem 0.34rem; color: var(--ef-ink-2);
+  }
+}
+
+@layer components {
+
+  /* ── skewed parallelogram nav — THE Endfield menu list (g13, g20, g59, g74) ──
+     Wrap each item's contents in one element (span) so the counter-shear lands. */
+  .ef-skewnav { display: flex; flex-direction: column; gap: var(--ef-1); }
+  .ef-skewnav--row { flex-direction: row; flex-wrap: wrap; gap: var(--ef-2); }
+  .ef-skewnav__item {
+    display: block; width: 100%; text-align: left; cursor: pointer;
+    font-family: var(--ef-font-mono); font-size: var(--ef-t-12);
+    letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--ef-ink-2); background: var(--ef-surface);
+    border: 1px solid var(--ef-line); border-left: var(--ef-rail) solid var(--ef-line);
+    padding: 0.6rem 1rem;
+    transform: skewX(var(--ef-skew));
+    transition: color var(--ef-dur-1) var(--ef-ease),
+                border-color var(--ef-dur-1) var(--ef-ease),
+                background var(--ef-dur-1) var(--ef-ease);
+  }
+  .ef-skewnav--row .ef-skewnav__item { width: auto; }
+  .ef-skewnav__item > * { display: inline-block; transform: skewX(calc(-1 * var(--ef-skew))); }
+  .ef-skewnav__item:hover { color: var(--ef-ink); border-left-color: var(--ef-line-2); }
+  .ef-skewnav__item[aria-current="true"],
+  .ef-skewnav__item[data-active] {
+    background: var(--ef-accent); color: var(--ef-on-accent);
+    border-color: var(--ef-accent); font-weight: 700;
+  }
+
+  /* ── vertical rail nav — the un-sheared DOC-mode sidebar (g29, g56, g66, g76) ── */
+  .ef-railnav { display: flex; flex-direction: column; }
+  .ef-railnav__item {
+    display: flex; align-items: center; gap: var(--ef-2);
+    padding: 0.55rem 0.9rem; text-align: left; cursor: pointer;
+    font-family: var(--ef-font-mono); font-size: var(--ef-t-12);
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--ef-ink-3); background: transparent;
+    border: 0; border-left: var(--ef-rail) solid transparent;
+    transition: color var(--ef-dur-1), border-color var(--ef-dur-1), background var(--ef-dur-1);
+  }
+  .ef-railnav__item:hover { color: var(--ef-ink); }
+  .ef-railnav__item[aria-current="true"] {
+    color: var(--ef-accent-ink); border-left-color: var(--ef-accent);
+    background: color-mix(in srgb, var(--ef-yellow) 7%, transparent);
+  }
+
+  /* ── right-side detail drawer (g06, g09, g10, g12, g19, g52, g77) ─────── */
+  .ef-drawer {
+    display: flex; flex-direction: column;
+    background: var(--ef-surface);
+    border: 1px solid var(--ef-line); border-left: var(--ef-bw-2) solid var(--ef-line-2);
+  }
+  .ef-drawer__head { display: flex; align-items: flex-start; gap: var(--ef-3); padding: var(--ef-4); border-bottom: 1px solid var(--ef-line); }
+  .ef-drawer__title { font-family: var(--ef-font-display); font-weight: 600; text-transform: uppercase; letter-spacing: 0.02em; font-size: var(--ef-t-18); }
+  .ef-drawer__sub { font-family: var(--ef-font-mono); font-size: var(--ef-t-11); color: var(--ef-ink-3); text-transform: uppercase; letter-spacing: var(--ef-track-label); }
+  .ef-drawer__body { display: flex; flex-direction: column; gap: var(--ef-3); padding: var(--ef-4); overflow-y: auto; }
+  .ef-drawer__sec { font-family: var(--ef-font-mono); font-size: var(--ef-t-11); font-weight: 700; letter-spacing: var(--ef-track-label); text-transform: uppercase; color: var(--ef-ink-3); }
+  .ef-drawer__foot { margin-top: auto; padding: var(--ef-3) var(--ef-4); border-top: 1px solid var(--ef-line); }
+
+  /* pipe-aligned stat row — "AGILITY            | 179" */
+  .ef-statrow {
+    display: flex; align-items: baseline; justify-content: space-between; gap: var(--ef-3);
+    font-family: var(--ef-font-mono); font-size: var(--ef-t-13);
+    padding: 0.3rem 0; border-bottom: 1px solid var(--ef-line);
+  }
+  .ef-statrow:last-child { border-bottom: 0; }
+  .ef-statrow__k { color: var(--ef-ink-3); text-transform: uppercase; letter-spacing: 0.06em; }
+  .ef-statrow__v { color: var(--ef-ink); font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .ef-statrow__v::before { content: "| "; color: var(--ef-ink-4); }
+  .ef-statrow--key { background: var(--ef-accent); padding: 0.3rem 0.5rem; border-bottom: 0; }
+  .ef-statrow--key .ef-statrow__k, .ef-statrow--key .ef-statrow__v { color: var(--ef-on-accent); }
+  .ef-statrow--key .ef-statrow__v::before { color: color-mix(in srgb, var(--ef-on-accent) 45%, transparent); }
+
+  /* keyword + delta highlights for drawer / tooltip body copy */
+  .ef-kw    { color: var(--ef-cyan); }
+  .ef-kw--u { color: var(--ef-cyan); text-decoration: underline; text-underline-offset: 2px; }
+  .ef-delta { color: var(--ef-blue); font-variant-numeric: tabular-nums; }
+
+  /* ── state-driven task / quest row (g14, g20, g34, g42, g47) ─────────── */
+  .ef-task {
+    position: relative; display: grid;
+    grid-template-columns: 1fr auto auto; gap: var(--ef-4); align-items: center;
+    padding: var(--ef-3) var(--ef-4);
+    background: var(--ef-surface);
+    border: 1px solid var(--ef-line); border-left: var(--ef-rail) solid var(--ef-line);
+  }
+  .ef-task__title { font-size: var(--ef-t-14); color: var(--ef-ink); }
+  .ef-task__prog { grid-column: 1 / -1; height: 2px; margin-top: var(--ef-1); background: var(--ef-well); }
+  .ef-task__prog i { display: block; height: 100%; background: var(--ef-marker); }
+  .ef-task[data-state="active"] { border-left-color: var(--ef-marker); }
+  .ef-task[data-state="ready"] { background: var(--ef-accent); border-color: var(--ef-accent); }
+  .ef-task[data-state="ready"] .ef-task__title { color: var(--ef-on-accent); font-weight: 700; }
+  .ef-task[data-state="done"] { opacity: 0.5; }
+  .ef-task[data-state="done"] .ef-task__title { text-decoration: line-through; color: var(--ef-ink-3); }
+
+  /* ── diagonal-slash pip bar — "//////// MAX" (g05, g09, g57, g77) ────── */
+  .ef-pips { display: inline-flex; align-items: center; gap: 2px; }
+  .ef-pips__seg { width: 0.42rem; height: 0.85rem; background: var(--ef-line); transform: skewX(-20deg); }
+  .ef-pips__seg[data-on] { background: var(--ef-marker); }
+  .ef-pips__seg[data-on][data-hot] { background: var(--ef-magenta); }
+  .ef-pips__max {
+    margin-left: var(--ef-2); font-family: var(--ef-font-mono);
+    font-size: var(--ef-t-11); font-weight: 700; letter-spacing: 0.08em;
+    color: var(--ef-on-accent); background: var(--ef-accent); padding: 0.02rem 0.3rem;
+  }
+
+  /* ── blocked / deficit button — full width, hatched, "⊘ can't" (g12, g14) ── */
+  .ef-btn--blocked,
+  .ef-btn--blocked:hover {
+    width: 100%; justify-content: center; cursor: not-allowed;
+    color: var(--ef-crimson);
+    border-color: color-mix(in srgb, var(--ef-crimson) 40%, var(--ef-line));
+    background:
+      repeating-linear-gradient(45deg, transparent 0 6px,
+        color-mix(in srgb, var(--ef-crimson) 10%, transparent) 6px 8px),
+      var(--ef-well);
+    box-shadow: none;
+  }
+
+  /* ── radial gauge — 360° ring + centre metric (g23, g24, g73) ──────────
+     Set --ef-gauge-v 0-100. The ring is a fixed 8px so the centre always
+     clears the label; drop it in an align-items:center flex/grid cell. */
+  .ef-gauge {
+    position: relative; display: grid; place-content: center; place-items: center;
+    flex-shrink: 0; width: 5.25rem; aspect-ratio: 1; line-height: 1;
+    font-family: var(--ef-font-mono); text-align: center;
+  }
+  .ef-gauge::before {
+    content: ""; position: absolute; inset: 0; border-radius: 50%;
+    background: conic-gradient(var(--ef-marker) calc(var(--ef-gauge-v, 0) * 1%), var(--ef-line) 0);
+    -webkit-mask: radial-gradient(farthest-side, #0000 calc(100% - 8px), #000 calc(100% - 7px));
+            mask: radial-gradient(farthest-side, #0000 calc(100% - 8px), #000 calc(100% - 7px));
+  }
+  .ef-gauge__v { position: relative; font-weight: 700; font-size: var(--ef-t-18); line-height: 1; color: var(--ef-accent-ink); font-variant-numeric: tabular-nums; }
+  .ef-gauge__l { position: relative; margin-top: 3px; font-size: 0.5rem; letter-spacing: 0.08em; color: var(--ef-ink-3); text-transform: uppercase; }
+
+  /* ── vertical spine rail — gear slots, node lists (g10) ─────────────── */
+  .ef-spine { position: relative; display: flex; flex-direction: column; gap: var(--ef-2); padding-left: var(--ef-4); }
+  .ef-spine::before { content: ""; position: absolute; left: 4px; top: 4px; bottom: 4px; width: 1px; background: var(--ef-line); }
+  .ef-spine__node { position: relative; }
+  .ef-spine__node::before { content: ""; position: absolute; left: -15px; top: 0.55rem; width: 6px; height: 6px; background: var(--ef-line); transform: rotate(45deg); }
+  .ef-spine__node[data-active]::before { background: var(--ef-marker); box-shadow: var(--ef-glow); }
+
+  /* ── ID card — yellow header tab + name + body (g11, g49, the key-art made UI) ── */
+  .ef-idcard { background: var(--ef-surface); border: 1px solid var(--ef-line); clip-path: var(--ef-chamfer); overflow: hidden; }
+  .ef-idcard__tab {
+    display: inline-block; background: var(--ef-accent); color: var(--ef-on-accent);
+    font-family: var(--ef-font-mono); font-size: var(--ef-t-11); font-weight: 700;
+    letter-spacing: var(--ef-track-label); text-transform: uppercase; padding: 0.16rem 0.7rem;
+  }
+  .ef-idcard__name { font-family: var(--ef-font-display); font-weight: 700; text-transform: uppercase; font-size: var(--ef-t-26); padding: var(--ef-2) var(--ef-4) 0; }
+  .ef-idcard__body { padding: var(--ef-3) var(--ef-4) var(--ef-4); display: flex; flex-direction: column; gap: var(--ef-2); }
+
+  /* ── yellow structural slab — the primary info / action zone (g04, g74) ── */
+  .ef-slab {
+    position: relative; overflow: hidden;
+    background: var(--ef-accent); color: var(--ef-on-accent);
+    padding: var(--ef-4) var(--ef-5);
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%);
+  }
+  .ef-slab__wm {
+    position: absolute; right: 0.5rem; bottom: -0.4rem; pointer-events: none;
+    font-family: var(--ef-font-display); font-weight: 700; text-transform: uppercase;
+    font-size: clamp(1.8rem, 6vw, 3rem); letter-spacing: 0.1em;
+    color: color-mix(in srgb, var(--ef-on-accent) 12%, transparent);
+  }
+
+  /* ── currency chip — icon · number · [＋] in a hex frame ─────────────── */
+  .ef-currency {
+    display: inline-flex; align-items: center; gap: var(--ef-2);
+    font-family: var(--ef-font-mono); font-variant-numeric: tabular-nums;
+    font-size: var(--ef-t-12); color: var(--ef-ink-2);
+    border: 1px solid var(--ef-line); padding: 0.16rem 0.16rem 0.16rem 0.55rem;
+  }
+  .ef-currency__add {
+    display: grid; place-items: center; width: 1.1rem; height: 1.1rem;
+    color: var(--ef-accent-ink); background: var(--ef-surface-2); border: 1px solid var(--ef-line);
+    clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
+  }
+
+  /* ── rarity spine — bottom-border tier on an item tile (g52, g77) ────── */
+  .ef-rarity { border-bottom: var(--ef-bw-2) solid var(--ef-rarity-3); }
+  .ef-rarity[data-tier="1"] { border-bottom-color: var(--ef-rarity-1); }
+  .ef-rarity[data-tier="2"] { border-bottom-color: var(--ef-rarity-2); }
+  .ef-rarity[data-tier="3"] { border-bottom-color: var(--ef-rarity-3); }
+  .ef-rarity[data-tier="4"] { border-bottom-color: var(--ef-rarity-4); }
+  .ef-rarity[data-tier="5"] { border-bottom-color: var(--ef-rarity-5); }
+  .ef-rarity[data-tier="6"] { border-bottom-color: var(--ef-rarity-6); box-shadow: 0 3px 10px -4px var(--ef-rarity-6); }
+
+  /* ── split-tone modal — dark context header / light action body (g69, g73) ── */
+  .ef-modal--split .ef-modal__head { background: var(--ef-surface-2); border-bottom-color: var(--ef-line-2); }
+
+  /* a hard-light plane. Re-scope the DOC palette locally so nested components
+     (buttons, strong, labels) stay legible on it regardless of the page theme. */
+  .ef-modal__body--doc, .ef-tipcard__doc {
+    --ef-ground: #F5F5F2; --ef-surface: #FFFFFF; --ef-surface-2: #ECECE8;
+    --ef-well: #E4E4DF; --ef-line: #C7C9CF; --ef-line-2: #9A9CA3;
+    --ef-ink: #17181A; --ef-ink-2: #3B3D43; --ef-ink-3: #55575F; --ef-ink-4: #8A8D95;
+    --ef-accent-ink: #141519; --ef-marker: #7A6D00; --ef-link: #185FA0;
+    background: var(--ef-ground); color: var(--ef-ink);
+  }
+
+  /* ── hybrid tooltip card — yellow head · dark meta · doc body · stats (g58) ── */
+  .ef-tipcard { width: min(20rem, 92%); background: var(--ef-surface); border: 1px solid var(--ef-line); clip-path: var(--ef-chamfer); overflow: hidden; }
+  .ef-tipcard__hd {
+    background: var(--ef-accent); color: var(--ef-on-accent);
+    font-family: var(--ef-font-display); font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.03em; padding: 0.4rem 0.8rem;
+  }
+  .ef-tipcard__meta { display: flex; align-items: center; gap: var(--ef-2); padding: var(--ef-3); border-bottom: 1px solid var(--ef-line); }
+  .ef-tipcard__doc { padding: var(--ef-3); font-size: var(--ef-t-13); }
+  .ef-tipcard__stats { padding: var(--ef-3); display: flex; flex-direction: column; gap: var(--ef-2); }
+
+  /* ── DOC-mode report row — dark name chip + live area chart (g70, g71) ──
+     Drop an inline <svg> into .ef-report__fig; fill areas with the --ef-data-* tokens. */
+  .ef-report { display: flex; flex-direction: column; border: 1px solid var(--ef-line); }
+  .ef-report__row { display: grid; grid-template-columns: 12rem 1fr auto; gap: var(--ef-4); align-items: center; padding: var(--ef-2) var(--ef-3); border-bottom: 1px solid var(--ef-line); }
+  .ef-report__row:last-child { border-bottom: 0; }
+  .ef-report__name {
+    display: flex; align-items: center; gap: var(--ef-2);
+    background: #1E2024; color: #F0F0F2;
+    font-family: var(--ef-font-mono); font-size: var(--ef-t-12);
+    padding: 0.3rem 0.5rem; border-left: var(--ef-rail) solid var(--ef-line-2);
+  }
+  .ef-report__fig { min-width: 0; }
+  .ef-report__data { font-family: var(--ef-font-mono); font-size: var(--ef-t-12); text-align: right; color: var(--ef-ink-2); font-variant-numeric: tabular-nums; }
+  .ef-report__data .over { color: var(--ef-data-deficit); font-weight: 700; }
+}
+
+/* ── UNLAYERED — the host wraps this file in an off-white reset whose bare
+   element rules (body background/font, color-scheme) are UNLAYERED and would
+   otherwise beat everything in @layer base. Re-assert the essentials here so
+   they win regardless of the wrapper. ─────────────────────────────────────── */
+:root { color-scheme: dark; --ef-ground: #0F0F10; }
+:root[data-theme="light"] { color-scheme: light; --ef-ground: #F6F6F3; }
+html { background: #0F0F10; }
+html[data-theme="light"] { background: #F6F6F3; }
+body {
+  background: var(--ef-ground);
+  color: var(--ef-ink, #F0F0F2);
+  font-family: "Jost", "Century Gothic", system-ui, sans-serif;
+  font-size: 1rem;
+  line-height: 1.62;
+  min-height: 100vh;
+  margin: 0;
+}

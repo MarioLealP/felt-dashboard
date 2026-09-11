@@ -1,0 +1,74 @@
+/* ───────────────────────────────────────────────────────────────────────────
+   Tailwind v4 entry + the Endfield design system.
+   Import this once, from main.tsx.
+
+   Split of responsibilities:
+     · .ef-* classes (from endfield.css) — components, motifs, structure.
+     · Tailwind utilities — layout, spacing, flex/grid, one-off colour.
+   Both draw from the same --ef-* custom properties, so HUD ⇄ DOC still works
+   by flipping [data-theme] on <html>.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+@import "tailwindcss";
+@import "./endfield.css";
+
+/* Endfield tokens → Tailwind's colour / font / easing scales.
+   `inline` makes each utility emit `var(--ef-*)` directly instead of a
+   build-time snapshot, so `bg-surface` etc. follow the live theme. */
+@theme inline {
+  --color-ground: var(--ef-ground);
+  --color-surface: var(--ef-surface);
+  --color-surface-2: var(--ef-surface-2);
+  --color-well: var(--ef-well);
+  --color-line: var(--ef-line);
+  --color-line-2: var(--ef-line-2);
+
+  --color-ink: var(--ef-ink);
+  --color-ink-2: var(--ef-ink-2);
+  --color-ink-3: var(--ef-ink-3);
+  --color-ink-4: var(--ef-ink-4);
+
+  --color-accent: var(--ef-accent);
+  --color-yellow: var(--ef-yellow);
+  --color-cyan: var(--ef-cyan);
+  --color-magenta: var(--ef-magenta);
+  --color-crimson: var(--ef-crimson);
+  --color-orange: var(--ef-orange);
+  --color-green: var(--ef-green);
+  --color-blue: var(--ef-blue);
+
+  --font-display: var(--ef-font-display);
+  --font-body: var(--ef-font-body);
+  --font-mono: var(--ef-font-mono);
+
+  --ease-snap: var(--ef-ease);
+  --ease-settle: var(--ef-ease-out);
+}
+
+/* Endfield is radius-0 — the chamfer carries the character. Zero Tailwind's
+   rounded-* scale so nobody reaches for it by habit. */
+@theme {
+  --radius-xs: 0;
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --radius-2xl: 0;
+  --radius-3xl: 0;
+  --radius-4xl: 0;
+}
+
+/* the two-corner chamfer + the active rail, as utilities */
+@utility chamfer {
+  clip-path: var(--ef-chamfer);
+}
+@utility rail {
+  border-left: var(--ef-rail) solid var(--ef-accent);
+}
+
+body {
+  min-height: 100dvh;
+  background: var(--ef-ground);
+  color: var(--ef-ink);
+  font-family: var(--ef-font-body);
+}
