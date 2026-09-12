@@ -21,7 +21,7 @@ tauri-build = { version = "2.6.3", features = [] }
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 log = "0.4"
-tauri = { version = "2.11.3", features = [] }
+tauri = { version = "2.11.3", features = ["tray-icon"] }
 tauri-plugin-log = "2"
 
 # Outbound calls to felt-core go through this plugin (native Rust HTTP
@@ -35,6 +35,9 @@ tauri-plugin-log = "2"
 # obscure webkit2gtk/soup3 quirk, route through Tauri's own HTTP client,
 # which isn't subject to the webview's network stack at all.
 tauri-plugin-http = "2"
+tauri-plugin-global-shortcut = "2"
+cpal = "0.17.1"
+hound = "3.5.1"
 
 # Linux only: WebKitGTK doesn't grant getUserMedia (mic) access without an
 # explicit permission-request handler — wry/Tauri don't wire one up by
