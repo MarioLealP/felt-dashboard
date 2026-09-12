@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { listen } from "@tauri-apps/api/event";
 
@@ -43,6 +43,32 @@ export function App() {
   // bug hit earlier this session — a once-registered closure reading
   // `isRecording` would see whatever it was at mount, not its current
   // value, so a toggle could do the wrong thing depending on timing.
+  // Shared by the manual stop button and the auto-stop listener below, so
+  // a wheel-tilt/wake-word-triggered recording that ends itself (see
+  // audio.rs's silence detection) is handled identically to one the user
+  // stopped by hand — same transcript, same reply, same played-back audio.
+  const finishRecording = useCallback(async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const audioBlob = await stop();
+      const result = await sendVoiceChat(audioBlob, SESSION_ID);
+      setMessages((prev) => [
+        ...prev,
+        { id: crypto.randomUUID(), role: "user", text: result.transcribed || "(voice message)" },
+        { id: crypto.randomUUID(), role: "assistant", text: result.reply },
+      ]);
+      if (audioRef.current) {
+        audioRef.current.src = URL.createObjectURL(result.audio);
+        await audioRef.current.play();
+      }
+    } catch {
+      setError("Voice chat failed. Is felt-voice reachable?");
+    } finally {
+      setBusy(false);
+    }
+  }, [stop]);
+
   useEffect(() => {
     const unlistenFocusText = listen("felt://focus-text", () => {
       textareaRef.current?.focus();
@@ -53,6 +79,12 @@ export function App() {
         setError("Couldn't access the microphone.");
       });
     });
+    // Native-recording (Tauri) side only — see audio.rs's silence monitor.
+    // Not available in the browser-tab build, which isn't the deployed
+    // surface (see useMicRecorder.ts).
+    const unlistenAutoStop = listen("felt://recording-auto-stopped", () => {
+      void finishRecording();
+    });
     return () => {
       void unlistenFocusText.then((f) => {
         f();
@@ -60,8 +92,11 @@ export function App() {
       void unlistenStartVoice.then((f) => {
         f();
       });
+      void unlistenAutoStop.then((f) => {
+        f();
+      });
     };
-  }, [start]);
+  }, [start, finishRecording]);
 
   async function handleSend() {
     const text = draft.trim();
@@ -82,25 +117,7 @@ export function App() {
 
   async function handleMicClick() {
     if (isRecording) {
-      setBusy(true);
-      setError(null);
-      try {
-        const audioBlob = await stop();
-        const result = await sendVoiceChat(audioBlob, SESSION_ID);
-        setMessages((prev) => [
-          ...prev,
-          { id: crypto.randomUUID(), role: "user", text: result.transcribed || "(voice message)" },
-          { id: crypto.randomUUID(), role: "assistant", text: result.reply },
-        ]);
-        if (audioRef.current) {
-          audioRef.current.src = URL.createObjectURL(result.audio);
-          await audioRef.current.play();
-        }
-      } catch {
-        setError("Voice chat failed. Is felt-voice reachable?");
-      } finally {
-        setBusy(false);
-      }
+      await finishRecording();
     } else {
       try {
         await start();

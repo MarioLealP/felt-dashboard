@@ -41,7 +41,15 @@ async fn handle_connection(app: &AppHandle, stream: UnixStream) {
                 let _ = app.emit("felt://focus-text", ());
             }
             "start-voice" => {
-                show_window(app);
+                // Deliberately does NOT show/focus the window, unlike
+                // "show-text" below — Mario, 2026-09-12: "make the mic
+                // record not pop open the window so i can use it while
+                // doing other things without breaking the flow". Typing
+                // needs the window; talking doesn't, especially
+                // mid-game — the reply still plays back as audio with
+                // the window hidden, and recording auto-stops on
+                // silence (audio.rs) with no manual stop-button click
+                // needed either.
                 let _ = app.emit("felt://start-voice", ());
             }
             other => log::warn!("trigger socket: unrecognized command {other:?}"),

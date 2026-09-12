@@ -3,6 +3,8 @@ mod portal_register;
 mod shortcut;
 mod trigger_socket;
 
+use std::sync::Mutex;
+
 use tauri::{
   menu::{CheckMenuItem, Menu, MenuItem},
   tray::TrayIconBuilder,
@@ -10,14 +12,28 @@ use tauri::{
   AppHandle, Manager, WebviewUrl, WindowEvent,
 };
 
+// Mario, 2026-09-12: "keybind opens the window but doesn't close it" — the
+// previous version trusted `window.is_visible()` to know which branch to
+// take, but that call is unreliable on Wayland (confirmed: after the first
+// hide(), it kept reporting visible=true here, so every later toggle took
+// the "show" branch again). Tracking our own flag, updated by every code
+// path that shows or hides the window (this fn, the close button, and the
+// tray's "Show Felt" item), means the toggle no longer depends on the
+// compositor accurately reporting window state back to us.
+#[derive(Default)]
+pub(crate) struct WindowVisible(Mutex<bool>);
+
 pub(crate) fn toggle_main_window(app: &AppHandle) {
   if let Some(window) = app.get_webview_window("main") {
-    let visible = window.is_visible().unwrap_or(false);
-    if visible {
+    let visibility = app.state::<WindowVisible>();
+    let mut visible = visibility.0.lock().unwrap();
+    if *visible {
       let _ = window.hide();
+      *visible = false;
     } else {
       let _ = window.show();
       let _ = window.set_focus();
+      *visible = true;
     }
   }
 }
@@ -45,6 +61,7 @@ pub fn run() {
   tauri::Builder::default()
     .plugin(tauri_plugin_http::init())
     .manage(audio::RecordingState::default())
+    .manage(WindowVisible(Mutex::new(true)))
     .invoke_handler(tauri::generate_handler![audio::start_recording, audio::stop_recording])
     .setup(move |app| {
       // Always on, not just in debug builds — this is a release binary
@@ -157,6 +174,7 @@ pub fn run() {
             if let Some(window) = app.get_webview_window("main") {
               let _ = window.show();
               let _ = window.set_focus();
+              *app.state::<WindowVisible>().0.lock().unwrap() = true;
             }
           }
           "configure-keybind" => {
@@ -187,6 +205,7 @@ pub fn run() {
       if let WindowEvent::CloseRequested { api, .. } = event {
         api.prevent_close();
         let _ = window.hide();
+        *window.state::<WindowVisible>().0.lock().unwrap() = false;
       }
     })
     .run(tauri::generate_context!())
