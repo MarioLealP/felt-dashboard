@@ -43,6 +43,10 @@ pub struct RecordingState {
     active: Arc<AtomicBool>,
 }
 
+pub fn is_recording(state: &RecordingState) -> bool {
+    state.active.load(Ordering::SeqCst)
+}
+
 #[tauri::command]
 pub fn start_recording(app: AppHandle, state: tauri::State<RecordingState>) -> Result<(), String> {
     let host = cpal::default_host();

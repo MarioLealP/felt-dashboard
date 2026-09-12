@@ -17,7 +17,7 @@ use tauri::{AppHandle, Emitter, Manager};
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::net::{UnixListener, UnixStream};
 
-use crate::toggle_main_window;
+use crate::{toggle_main_window, WindowVisible};
 
 pub fn socket_path() -> PathBuf {
     let runtime_dir = std::env::var("XDG_RUNTIME_DIR").unwrap_or_else(|_| "/tmp".to_string());
@@ -37,20 +37,39 @@ async fn handle_connection(app: &AppHandle, stream: UnixStream) {
         match line.trim() {
             "toggle" => toggle_main_window(app),
             "show-text" => {
-                show_window(app);
-                let _ = app.emit("felt://focus-text", ());
+                // A real toggle now, not just "show" — Mario, 2026-09-12:
+                // "left wheel still doesn't close". Same WindowVisible
+                // flag toggle_main_window uses (see lib.rs), since
+                // is_visible() itself isn't trustworthy on Wayfire.
+                let visibility = app.state::<WindowVisible>();
+                if visibility.get() {
+                    if let Some(window) = app.get_webview_window("main") {
+                        let _ = window.hide();
+                    }
+                    visibility.set(false);
+                } else {
+                    show_window(app);
+                    visibility.set(true);
+                    let _ = app.emit("felt://focus-text", ());
+                }
             }
             "start-voice" => {
-                // Deliberately does NOT show/focus the window, unlike
-                // "show-text" below — Mario, 2026-09-12: "make the mic
-                // record not pop open the window so i can use it while
-                // doing other things without breaking the flow". Typing
-                // needs the window; talking doesn't, especially
-                // mid-game — the reply still plays back as audio with
-                // the window hidden, and recording auto-stops on
-                // silence (audio.rs) with no manual stop-button click
-                // needed either.
-                let _ = app.emit("felt://start-voice", ());
+                // Also a real toggle now — Mario, 2026-09-12: "nor right
+                // wheel stops the mic". A recording already in progress
+                // (whether started by this same wheel, the other trigger
+                // surfaces, or wake-word once that's enabled) gets ended
+                // by a second tilt, via the exact same event the silence
+                // monitor uses (audio.rs) — the frontend doesn't need to
+                // know which one fired it. Deliberately does NOT show/
+                // focus the window either way, unlike "show-text" above —
+                // Mario, same day: "make the mic record not pop open the
+                // window... without breaking the flow" (e.g. mid-game).
+                let recording_state = app.state::<crate::audio::RecordingState>();
+                if crate::audio::is_recording(&recording_state) {
+                    let _ = app.emit("felt://recording-auto-stopped", ());
+                } else {
+                    let _ = app.emit("felt://start-voice", ());
+                }
             }
             other => log::warn!("trigger socket: unrecognized command {other:?}"),
         }

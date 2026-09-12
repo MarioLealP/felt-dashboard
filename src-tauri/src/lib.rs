@@ -23,17 +23,25 @@ use tauri::{
 #[derive(Default)]
 pub(crate) struct WindowVisible(Mutex<bool>);
 
+impl WindowVisible {
+  pub(crate) fn get(&self) -> bool {
+    *self.0.lock().unwrap()
+  }
+  pub(crate) fn set(&self, value: bool) {
+    *self.0.lock().unwrap() = value;
+  }
+}
+
 pub(crate) fn toggle_main_window(app: &AppHandle) {
   if let Some(window) = app.get_webview_window("main") {
     let visibility = app.state::<WindowVisible>();
-    let mut visible = visibility.0.lock().unwrap();
-    if *visible {
+    if visibility.get() {
       let _ = window.hide();
-      *visible = false;
+      visibility.set(false);
     } else {
       let _ = window.show();
       let _ = window.set_focus();
-      *visible = true;
+      visibility.set(true);
     }
   }
 }
@@ -174,7 +182,7 @@ pub fn run() {
             if let Some(window) = app.get_webview_window("main") {
               let _ = window.show();
               let _ = window.set_focus();
-              *app.state::<WindowVisible>().0.lock().unwrap() = true;
+              app.state::<WindowVisible>().set(true);
             }
           }
           "configure-keybind" => {
@@ -205,7 +213,7 @@ pub fn run() {
       if let WindowEvent::CloseRequested { api, .. } = event {
         api.prevent_close();
         let _ = window.hide();
-        *window.state::<WindowVisible>().0.lock().unwrap() = false;
+        window.state::<WindowVisible>().set(false);
       }
     })
     .run(tauri::generate_context!())
