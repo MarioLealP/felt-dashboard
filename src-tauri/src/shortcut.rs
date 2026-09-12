@@ -23,12 +23,27 @@ use ashpd::desktop::global_shortcuts::{GlobalShortcuts, NewShortcut};
 use futures_util::StreamExt;
 use tauri::AppHandle;
 
+use crate::portal_register;
 use crate::toggle_main_window;
 
 const TOGGLE_SHORTCUT_ID: &str = "toggle-felt";
 
 pub async fn run(app: AppHandle) {
-    let shortcuts = match GlobalShortcuts::new().await {
+    // Real error hit 2026-09-12: "org.freedesktop.portal.Error.NotAllowed:
+    // An app id is required" — GlobalShortcuts (and other app-id-gated
+    // portals) reject a plain native binary unless it first registers
+    // its identity via org.freedesktop.host.portal.Registry.Register.
+    // That registration is per-D-Bus-connection, so GlobalShortcuts has
+    // to be built on the *same* connection the registration happened
+    // on (with_connection), not a fresh one from GlobalShortcuts::new().
+    let connection = match portal_register::register().await {
+        Ok(connection) => connection,
+        Err(err) => {
+            log::error!("couldn't register app with the portal: {err}");
+            return;
+        }
+    };
+    let shortcuts = match GlobalShortcuts::with_connection(connection).await {
         Ok(shortcuts) => shortcuts,
         Err(err) => {
             log::error!("GlobalShortcuts portal unavailable: {err}");
@@ -45,12 +60,27 @@ pub async fn run(app: AppHandle) {
     };
     let new_shortcut =
         NewShortcut::new(TOGGLE_SHORTCUT_ID, "Show/hide Felt").preferred_trigger(Some("<Control><Alt>f"));
-    if let Err(err) = shortcuts
+    // bind_shortcuts() only starts a portal Request — submitting it isn't
+    // the same as it succeeding. The real 2026-09-12 bug: this was never
+    // checked, so a rejected/failed bind (or a backend with no working
+    // consent UI at all) looked identical to a working one from here.
+    // .response() is what actually waits for and reports the outcome.
+    let bind_request = match shortcuts
         .bind_shortcuts(&session, &[new_shortcut], None, Default::default())
         .await
     {
-        log::error!("couldn't bind the Felt toggle shortcut: {err}");
-        return;
+        Ok(request) => request,
+        Err(err) => {
+            log::error!("couldn't submit the Felt toggle shortcut bind request: {err}");
+            return;
+        }
+    };
+    match bind_request.response() {
+        Ok(response) => log::info!("shortcut bind response: {response:?}"),
+        Err(err) => {
+            log::error!("shortcut bind request failed: {err}");
+            return;
+        }
     }
 
     let mut activated = match shortcuts.receive_activated().await {
@@ -71,7 +101,14 @@ pub async fn run(app: AppHandle) {
 /// Opens the desktop's own native shortcut-rebinding UI — used by the
 /// tray menu's "Change keybind..." item.
 pub async fn configure() {
-    let shortcuts = match GlobalShortcuts::new().await {
+    let connection = match portal_register::register().await {
+        Ok(connection) => connection,
+        Err(err) => {
+            log::error!("couldn't register app with the portal: {err}");
+            return;
+        }
+    };
+    let shortcuts = match GlobalShortcuts::with_connection(connection).await {
         Ok(shortcuts) => shortcuts,
         Err(err) => {
             log::error!("GlobalShortcuts portal unavailable: {err}");
@@ -87,14 +124,24 @@ pub async fn configure() {
     };
     let new_shortcut =
         NewShortcut::new(TOGGLE_SHORTCUT_ID, "Show/hide Felt").preferred_trigger(Some("<Control><Alt>f"));
-    if let Err(err) = shortcuts
+    let bind_request = match shortcuts
         .bind_shortcuts(&session, &[new_shortcut], None, Default::default())
         .await
     {
-        log::error!("couldn't bind the Felt toggle shortcut: {err}");
+        Ok(request) => request,
+        Err(err) => {
+            log::error!("couldn't submit the Felt toggle shortcut bind request: {err}");
+            return;
+        }
+    };
+    if let Err(err) = bind_request.response() {
+        log::error!("shortcut bind request failed: {err}");
         return;
     }
+    log::info!("opening the shortcut config UI...");
     if let Err(err) = shortcuts.configure_shortcuts(&session, None, Default::default()).await {
         log::error!("couldn't open the shortcut config UI: {err}");
+    } else {
+        log::info!("shortcut config UI request completed");
     }
 }

@@ -40,8 +40,9 @@ hound = "3.5.1"
 ashpd = { version = "0.13.13", features = ["tokio", "global_shortcuts"] }
 futures-util = "0.3.34"
 dotenvy = "0.15.7"
-tokio = { version = "1.53.1", features = ["sync"] }
+tokio = { version = "1.53.1", features = ["io-util", "macros", "net", "rt", "sync"] }
 reqwest = { version = "0.13.5", features = ["json"] }
+zbus = { version = "5.19.0", features = ["tokio"] }
 
 # Linux only: WebKitGTK doesn't grant getUserMedia (mic) access without an
 # explicit permission-request handler — wry/Tauri don't wire one up by

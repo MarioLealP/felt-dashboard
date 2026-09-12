@@ -1,5 +1,7 @@
 mod audio;
+mod portal_register;
 mod shortcut;
+mod trigger_socket;
 
 use tauri::{
   menu::{CheckMenuItem, Menu, MenuItem},
@@ -45,13 +47,18 @@ pub fn run() {
     .manage(audio::RecordingState::default())
     .invoke_handler(tauri::generate_handler![audio::start_recording, audio::stop_recording])
     .setup(move |app| {
-      if cfg!(debug_assertions) {
-        app.handle().plugin(
-          tauri_plugin_log::Builder::default()
-            .level(log::LevelFilter::Info)
-            .build(),
-        )?;
-      }
+      // Always on, not just in debug builds — this is a release binary
+      // running as a systemd service; without a logger installed at all,
+      // every log::error!/log::info! call in this app (shortcut.rs,
+      // audio.rs) was a silent no-op the whole time, which is exactly
+      // why the portal shortcut's failures were invisible in
+      // `journalctl` (found 2026-09-12 while debugging "keybind still
+      // doesn't work" / "nothing happens if i press change keybind").
+      app.handle().plugin(
+        tauri_plugin_log::Builder::default()
+          .level(log::LevelFilter::Info)
+          .build(),
+      )?;
 
       // Toggles the chat window open/closed from anywhere (Mario,
       // 2026-09-12: "double click or keybind to pop open the chat", then
@@ -67,6 +74,22 @@ pub fn run() {
       // its own supported-compositors list).
       let app_handle = app.handle().clone();
       tauri::async_runtime::spawn(shortcut::run(app_handle));
+
+      // A general-purpose external trigger, separate from the portal
+      // keybind above — a Unix socket (see trigger_socket.rs) any
+      // process can write a named command to, regardless of whether
+      // the portal-based keybind actually works on Mario's compositor.
+      // Real use case: "left wheel -> text command, felt -> voice
+      // command, right wheel -> voice command" (Mario, 2026-09-12) —
+      // three distinct external trigger sources feeding two distinct
+      // actions, which a single "toggle" signal can't express. Mario's
+      // SteelSeries mouse's wheel-tilt buttons are horizontal-scroll
+      // axis events (REL_HWHEEL), not discrete key/button presses, so
+      // no ordinary keybinding mechanism (Wayfire's own included) can
+      // bind to them directly — felt-desktop-agent's own evdev listener
+      // does the direction detection and writes to this socket instead.
+      let app_handle_for_socket = app.handle().clone();
+      tauri::async_runtime::spawn(trigger_socket::run(app_handle_for_socket));
 
       // Outbound calls to felt-core go through tauri-plugin-http (see
       // src/lib/api.ts) — a native Rust request, not the webview's own

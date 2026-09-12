@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
+import { listen } from "@tauri-apps/api/event";
+
 import { ChatMessage, type Message } from "@/components/ChatMessage";
 import { Slab } from "@/components/Slab";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -22,12 +24,44 @@ export function App() {
   const { isRecording, start, stop } = useMicRecorder();
   const audioRef = useRef<HTMLAudioElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- scrolls when
     // messages changes; the effect reads scrollRef, not messages, directly
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
+
+  // External triggers (a mouse wheel-tilt, eventually a spoken wake word
+  // — see src-tauri/src/trigger_socket.rs) for two distinct actions, not
+  // just "show the window": one opens ready to type, the other opens
+  // and starts listening immediately (Mario, 2026-09-12: "left wheel ->
+  // text command... felt -> voice command, right wheel -> voice
+  // command"). No-ops in the browser-tab build, since `listen` only
+  // receives real events inside Tauri. Calling start() directly here
+  // (not via handleMicClick()'s toggle) avoids the exact stale-closure
+  // bug hit earlier this session — a once-registered closure reading
+  // `isRecording` would see whatever it was at mount, not its current
+  // value, so a toggle could do the wrong thing depending on timing.
+  useEffect(() => {
+    const unlistenFocusText = listen("felt://focus-text", () => {
+      textareaRef.current?.focus();
+    });
+    const unlistenStartVoice = listen("felt://start-voice", () => {
+      setError(null);
+      start().catch(() => {
+        setError("Couldn't access the microphone.");
+      });
+    });
+    return () => {
+      void unlistenFocusText.then((f) => {
+        f();
+      });
+      void unlistenStartVoice.then((f) => {
+        f();
+      });
+    };
+  }, [start]);
 
   async function handleSend() {
     const text = draft.trim();
@@ -105,6 +139,7 @@ export function App() {
 
       <div className="ef-field flex-row items-stretch gap-2">
         <textarea
+          ref={textareaRef}
           className="ef-textarea flex-1 resize-none"
           rows={1}
           placeholder="Message Felt..."
