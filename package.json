@@ -16,7 +16,8 @@
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
     "check": "pnpm fmt:check && pnpm lint && pnpm typecheck && pnpm test",
-    "sync:endfield": "bash scripts/sync-endfield.sh"
+    "sync:endfield": "bash scripts/sync-endfield.sh",
+    "tauri": "tauri"
   },
   "dependencies": {
     "react": "19.2.8",
@@ -24,6 +25,7 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "4.3.3",
+    "@tauri-apps/cli": "2.11.4",
     "@testing-library/dom": "10.4.1",
     "@testing-library/jest-dom": "7.0.1",
     "@testing-library/react": "16.3.3",
