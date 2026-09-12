@@ -1,41 +1,47 @@
 mod audio;
+mod shortcut;
 
 use tauri::{
-  menu::{Menu, MenuItem},
+  menu::{CheckMenuItem, Menu, MenuItem},
   tray::TrayIconBuilder,
   webview::WebviewWindowBuilder,
-  Manager, WebviewUrl, WindowEvent,
+  AppHandle, Manager, WebviewUrl, WindowEvent,
 };
-use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
+
+pub(crate) fn toggle_main_window(app: &AppHandle) {
+  if let Some(window) = app.get_webview_window("main") {
+    let visible = window.is_visible().unwrap_or(false);
+    if visible {
+      let _ = window.hide();
+    } else {
+      let _ = window.show();
+      let _ = window.set_focus();
+    }
+  }
+}
+
+async fn set_temperature_unit(felt_core_url: &str, unit: &str) {
+  let client = reqwest::Client::new();
+  let result = client
+    .post(format!("{felt_core_url}/v1/settings/temperature-unit"))
+    .json(&serde_json::json!({ "unit": unit }))
+    .send()
+    .await;
+  if let Err(err) = result {
+    log::error!("couldn't set temperature unit: {err}");
+  }
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-  // Toggles the chat window open/closed from anywhere (Mario, 2026-09-12:
-  // "double click or keybind to pop open the chat" — double-click isn't
-  // available on Linux, tray-icon click events are documented as
-  // unsupported there, so this keybind is the actual way in, alongside
-  // the tray menu's "Show Felt" item).
-  let toggle_shortcut = Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::KeyF);
+  let _ = dotenvy::dotenv();
+  // Same variable name the browser-tab build already reads at build time
+  // (src/lib/config.ts) — one place to configure it, not two.
+  let felt_core_url =
+    std::env::var("VITE_FELT_CORE_URL").unwrap_or_else(|_| "http://localhost:8420".to_string());
 
   tauri::Builder::default()
     .plugin(tauri_plugin_http::init())
-    .plugin(
-      tauri_plugin_global_shortcut::Builder::new()
-        .with_handler(move |app, shortcut, event| {
-          if shortcut == &toggle_shortcut && event.state() == ShortcutState::Pressed {
-            if let Some(window) = app.get_webview_window("main") {
-              let visible = window.is_visible().unwrap_or(false);
-              if visible {
-                let _ = window.hide();
-              } else {
-                let _ = window.show();
-                let _ = window.set_focus();
-              }
-            }
-          }
-        })
-        .build(),
-    )
     .manage(audio::RecordingState::default())
     .invoke_handler(tauri::generate_handler![audio::start_recording, audio::stop_recording])
     .setup(move |app| {
@@ -47,7 +53,20 @@ pub fn run() {
         )?;
       }
 
-      app.global_shortcut().register(toggle_shortcut)?;
+      // Toggles the chat window open/closed from anywhere (Mario,
+      // 2026-09-12: "double click or keybind to pop open the chat", then
+      // "keybind doesn't work" for a first attempt via
+      // tauri-plugin-global-shortcut — that crate's Linux backend is
+      // documented X11-only and genuinely didn't fire here. Mario, when
+      // offered "edit Wayfire's config directly" as the fallback: "cant
+      // we do a more broad OS independent system instead". The real
+      // answer is the portal (see shortcut.rs) — it's the actual
+      // Wayland-native standard for this, not tied to this one
+      // compositor's config file, and confirmed available here via
+      // xdg-desktop-portal-hyprland (which explicitly lists Wayfire in
+      // its own supported-compositors list).
+      let app_handle = app.handle().clone();
+      tauri::async_runtime::spawn(shortcut::run(app_handle));
 
       // Outbound calls to felt-core go through tauri-plugin-http (see
       // src/lib/api.ts) — a native Rust request, not the webview's own
@@ -83,21 +102,54 @@ pub fn run() {
       // Tray icon — this app now lives in the tray rather than being a
       // window you keep open (Mario, 2026-09-12). Linux tray icons don't
       // emit click/double-click events (a documented Tauri limitation),
-      // so "Show Felt" in the menu is the click-based way in; the global
+      // so "Show Felt" in the menu is the click-based way in; the portal
       // keybind above is the other.
       let show_item = MenuItem::with_id(app, "show", "Show Felt", true, None::<&str>)?;
+      let configure_keybind_item =
+        MenuItem::with_id(app, "configure-keybind", "Change keybind...", true, None::<&str>)?;
+      let celsius_item = CheckMenuItem::with_id(app, "unit-celsius", "Temperature: Celsius", true, true, None::<&str>)?;
+      let fahrenheit_item =
+        CheckMenuItem::with_id(app, "unit-fahrenheit", "Temperature: Fahrenheit", true, false, None::<&str>)?;
       let quit_item = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-      let menu = Menu::with_items(app, &[&show_item, &quit_item])?;
+      let menu = Menu::with_items(
+        app,
+        &[
+          &show_item,
+          &configure_keybind_item,
+          &celsius_item,
+          &fahrenheit_item,
+          &quit_item,
+        ],
+      )?;
+
+      let felt_core_url_for_menu = felt_core_url.clone();
+      let celsius_item_for_menu = celsius_item.clone();
+      let fahrenheit_item_for_menu = fahrenheit_item.clone();
       TrayIconBuilder::new()
         .icon(app.default_window_icon().cloned().expect("app icon must exist"))
         .menu(&menu)
         .tooltip("Felt")
-        .on_menu_event(|app: &tauri::AppHandle, event| match event.id.as_ref() {
+        .on_menu_event(move |app: &tauri::AppHandle, event| match event.id.as_ref() {
           "show" => {
             if let Some(window) = app.get_webview_window("main") {
               let _ = window.show();
               let _ = window.set_focus();
             }
+          }
+          "configure-keybind" => {
+            tauri::async_runtime::spawn(shortcut::configure());
+          }
+          "unit-celsius" => {
+            let _ = celsius_item_for_menu.set_checked(true);
+            let _ = fahrenheit_item_for_menu.set_checked(false);
+            let url = felt_core_url_for_menu.clone();
+            tauri::async_runtime::spawn(async move { set_temperature_unit(&url, "celsius").await });
+          }
+          "unit-fahrenheit" => {
+            let _ = celsius_item_for_menu.set_checked(false);
+            let _ = fahrenheit_item_for_menu.set_checked(true);
+            let url = felt_core_url_for_menu.clone();
+            tauri::async_runtime::spawn(async move { set_temperature_unit(&url, "fahrenheit").await });
           }
           "quit" => app.exit(0),
           _ => {}

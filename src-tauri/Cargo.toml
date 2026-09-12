@@ -6,7 +6,7 @@ authors = ["you"]
 license = ""
 repository = ""
 edition = "2021"
-rust-version = "1.77.2"
+rust-version = "1.87"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -35,9 +35,13 @@ tauri-plugin-log = "2"
 # obscure webkit2gtk/soup3 quirk, route through Tauri's own HTTP client,
 # which isn't subject to the webview's network stack at all.
 tauri-plugin-http = "2"
-tauri-plugin-global-shortcut = "2"
 cpal = "0.17.1"
 hound = "3.5.1"
+ashpd = { version = "0.13.13", features = ["tokio", "global_shortcuts"] }
+futures-util = "0.3.34"
+dotenvy = "0.15.7"
+tokio = { version = "1.53.1", features = ["sync"] }
+reqwest = { version = "0.13.5", features = ["json"] }
 
 # Linux only: WebKitGTK doesn't grant getUserMedia (mic) access without an
 # explicit permission-request handler — wry/Tauri don't wire one up by
