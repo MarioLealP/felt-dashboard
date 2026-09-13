@@ -13,6 +13,21 @@ import { FELT_CORE_URL } from "@/lib/config";
 const isTauri = "__TAURI_INTERNALS__" in window;
 const doFetch: typeof fetch = isTauri ? (tauriFetch as typeof fetch) : fetch;
 
+export interface HistoryMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export async function getHistory(sessionId: string): Promise<HistoryMessage[]> {
+  const response = await doFetch(
+    `${FELT_CORE_URL}/v1/history?session_id=${encodeURIComponent(sessionId)}`,
+  );
+  if (!response.ok) {
+    throw new Error(`Felt returned ${response.status}`);
+  }
+  return (await response.json()) as HistoryMessage[];
+}
+
 export async function sendChat(message: string, sessionId: string): Promise<string> {
   const response = await doFetch(`${FELT_CORE_URL}/v1/chat`, {
     method: "POST",

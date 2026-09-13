@@ -5,7 +5,7 @@ import { listen } from "@tauri-apps/api/event";
 import { ChatMessage, type Message } from "@/components/ChatMessage";
 import { Slab } from "@/components/Slab";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { sendChat, sendVoiceChat } from "@/lib/api";
+import { getHistory, sendChat, sendVoiceChat } from "@/lib/api";
 import { useMicRecorder } from "@/lib/useMicRecorder";
 import { useTheme } from "@/lib/useTheme";
 
@@ -31,6 +31,29 @@ export function App() {
     // messages changes; the effect reads scrollRef, not messages, directly
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
+
+  // Felt-core already persists every message to SQLite (it needs that for
+  // the brain's own context); this just restores the same history into the
+  // window on open, so hiding the tray app or restarting it doesn't wipe
+  // the visible conversation. Silent on failure — felt-core being slow to
+  // come up isn't something a fresh window should greet with an error
+  // banner, only real user actions (send/voice) surface those.
+  useEffect(() => {
+    getHistory(SESSION_ID)
+      .then((history) => {
+        setMessages(
+          history.map((message) => ({
+            id: crypto.randomUUID(),
+            role: message.role,
+            text: message.content,
+          })),
+        );
+      })
+      .catch(() => {
+        // felt-core unreachable at startup — start with an empty window,
+        // same as before this existed.
+      });
+  }, []);
 
   // External triggers (a mouse wheel-tilt, eventually a spoken wake word
   // — see src-tauri/src/trigger_socket.rs) for two distinct actions, not
