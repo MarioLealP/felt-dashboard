@@ -29,6 +29,15 @@ describe("ChatMessage", () => {
     expect(screen.getByText(/Image ready:/)).toBeInTheDocument();
   });
 
+  it("excludes trailing punctuation from the link", () => {
+    // 2026-09-14 review finding: a URL ending a sentence used to drag
+    // the trailing period into the href, breaking the link.
+    render(<ChatMessage role="assistant" text="check out https://example.com/page. thanks" />);
+    const link = screen.getByRole("link", { name: "https://example.com/page" });
+    expect(link).toHaveAttribute("href", "https://example.com/page");
+    expect(screen.getByText(/thanks/)).toBeInTheDocument();
+  });
+
   it("linkifies multiple URLs independently", () => {
     render(<ChatMessage role="assistant" text="see https://a.example/1 and https://b.example/2" />);
     expect(screen.getByRole("link", { name: "https://a.example/1" })).toBeInTheDocument();

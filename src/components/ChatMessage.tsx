@@ -3,7 +3,10 @@ export interface Message {
   text: string;
 }
 
-const URL_RE = /(https?:\/\/[^\s]+)/g;
+// Excludes common trailing punctuation (.,!?:;)]}'") from the match so a
+// URL ending a sentence ("check out https://x.com.") doesn't drag the
+// period into the href (2026-09-14 review finding).
+const URL_RE = /(https?:\/\/[^\s]+[^\s.,!?:;)\]}'"])/g;
 
 // A few replies (generate_image's "Image ready: <url>") carry a real
 // link Mario needs to actually click, not just read as plain text —
