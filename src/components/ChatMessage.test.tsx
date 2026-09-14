@@ -14,19 +14,35 @@ describe("ChatMessage", () => {
     expect(screen.queryByRole("link")).not.toBeInTheDocument();
   });
 
-  it("renders a URL in the reply as a clickable link", () => {
+  it("renders a plain (non-image) URL as a clickable text link", () => {
+    render(<ChatMessage role="assistant" text="see https://example.com/page" />);
+    const link = screen.getByRole("link", { name: "https://example.com/page" });
+    expect(link).toHaveAttribute("href", "https://example.com/page");
+    expect(link).toHaveAttribute("target", "_blank");
+  });
+
+  it("renders a generated image inline, wrapped in a link to the full image", () => {
+    // 2026-09-14, Mario: inline images rather than wiring up the unused
+    // SkillResult.ui_action field — reuses this link-rendering code for
+    // any image URL, whatever skill it came from.
     render(
       <ChatMessage
         role="assistant"
         text="Image ready: https://comfy.clockmost.com/view?filename=x.png"
       />,
     );
-    const link = screen.getByRole("link", {
-      name: "https://comfy.clockmost.com/view?filename=x.png",
-    });
+    const img = screen.getByRole("img", { name: "x.png" });
+    expect(img).toHaveAttribute("src", "https://comfy.clockmost.com/view?filename=x.png");
+    const link = img.closest("a");
     expect(link).toHaveAttribute("href", "https://comfy.clockmost.com/view?filename=x.png");
     expect(link).toHaveAttribute("target", "_blank");
     expect(screen.getByText(/Image ready:/)).toBeInTheDocument();
+  });
+
+  it("renders an image link by file extension, not just the ComfyUI shape", () => {
+    render(<ChatMessage role="assistant" text="found this: https://example.com/cat.jpg" />);
+    const img = screen.getByRole("img", { name: "cat.jpg" });
+    expect(img).toHaveAttribute("src", "https://example.com/cat.jpg");
   });
 
   it("excludes trailing punctuation from the link", () => {
