@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { listen } from "@tauri-apps/api/event";
-
 import { ChatMessage, type Message } from "@/components/ChatMessage";
 import { Slab } from "@/components/Slab";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -55,21 +53,11 @@ export function App() {
       });
   }, []);
 
-  // External triggers (a mouse wheel-tilt, eventually a spoken wake word
-  // — see src-tauri/src/trigger_socket.rs) for two distinct actions, not
-  // just "show the window": one opens ready to type, the other opens
-  // and starts listening immediately (Mario, 2026-09-12: "left wheel ->
-  // text command... felt -> voice command, right wheel -> voice
-  // command"). No-ops in the browser-tab build, since `listen` only
-  // receives real events inside Tauri. Calling start() directly here
-  // (not via handleMicClick()'s toggle) avoids the exact stale-closure
-  // bug hit earlier this session — a once-registered closure reading
-  // `isRecording` would see whatever it was at mount, not its current
-  // value, so a toggle could do the wrong thing depending on timing.
-  // Shared by the manual stop button and the auto-stop listener below, so
-  // a wheel-tilt/wake-word-triggered recording that ends itself (see
-  // audio.rs's silence detection) is handled identically to one the user
-  // stopped by hand — same transcript, same reply, same played-back audio.
+  // Global-hotkey push-to-talk (mic capture, felt-core call, toast, audio
+  // playback) now happens entirely on the Python side of felt-tray and
+  // never touches this window — Mario's call was to replace "pop the chat
+  // window open" with a plain toast for that path. This hook only backs
+  // the in-window mic button for manual typed-chat use.
   const finishRecording = useCallback(async () => {
     setBusy(true);
     setError(null);
@@ -91,35 +79,6 @@ export function App() {
       setBusy(false);
     }
   }, [stop]);
-
-  useEffect(() => {
-    const unlistenFocusText = listen("felt://focus-text", () => {
-      textareaRef.current?.focus();
-    });
-    const unlistenStartVoice = listen("felt://start-voice", () => {
-      setError(null);
-      start().catch(() => {
-        setError("Couldn't access the microphone.");
-      });
-    });
-    // Native-recording (Tauri) side only — see audio.rs's silence monitor.
-    // Not available in the browser-tab build, which isn't the deployed
-    // surface (see useMicRecorder.ts).
-    const unlistenAutoStop = listen("felt://recording-auto-stopped", () => {
-      void finishRecording();
-    });
-    return () => {
-      void unlistenFocusText.then((f) => {
-        f();
-      });
-      void unlistenStartVoice.then((f) => {
-        f();
-      });
-      void unlistenAutoStop.then((f) => {
-        f();
-      });
-    };
-  }, [start, finishRecording]);
 
   async function handleSend() {
     const text = draft.trim();

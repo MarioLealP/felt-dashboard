@@ -13,13 +13,15 @@ front-end.
   the reply plays back automatically.
 - Config via `VITE_FELT_CORE_URL` (`.env`, never hardcoded).
 
-## Status (2026-09-12)
+## Status (2026-09-20)
 
-Built and running — a real, working chat interface, not just an API
-tested via `curl`. Running as a `systemctl --user` dev-server service on
-the desktop (not yet a production build, not yet wrapped in Tauri per
-`assistant-dashboard.md`'s plan — that's follow-up polish once this is
-proven out).
+Built and running. Originally slated to ship wrapped in Tauri (Rust); after
+the desktop's Linux→Windows migration that plan was dropped in favor of a
+Python shell (`felt-tray`, in the sibling `felt-tray/` project) hosting this
+built frontend in a `pywebview`/WebView2 window — no Rust dependency, no
+`src-tauri/`. This repo builds the static frontend only; felt-tray owns the
+tray icon, global hotkey, native mic capture for push-to-talk, toast
+notifications, and the felt-overlay relay.
 
 **Stack**
 

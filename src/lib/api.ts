@@ -1,17 +1,12 @@
-import { fetch as tauriFetch } from "@tauri-apps/plugin-http";
-
 import { FELT_CORE_URL } from "@/lib/config";
 
-// Inside the packaged Tauri app, use Tauri's own HTTP client (a native
-// Rust request, not the webview's fetch) instead of the browser's fetch.
-// Real bug found 2026-09-12: WebKitGTK on Linux fails any POST whose
-// body isn't a trivial string — a JSON chat message, or a multipart
-// voice-chat upload — with a generic "TypeError: Load failed", while
-// plain-string POSTs and all GETs work fine. The browser-tab build (no
-// `__TAURI_INTERNALS__`) keeps using the real browser fetch, since the
-// Tauri plugin only exists inside the Tauri runtime.
-const isTauri = "__TAURI_INTERNALS__" in window;
-const doFetch: typeof fetch = isTauri ? (tauriFetch as typeof fetch) : fetch;
+// Previously routed through Tauri's own HTTP client on the packaged
+// desktop build, to work around a WebKitGTK-on-Linux bug where any POST
+// with a non-trivial body failed with "TypeError: Load failed" (found
+// 2026-09-12). The desktop shell is now pywebview/WebView2 (Windows),
+// which doesn't have that bug, so plain `fetch` is used unconditionally —
+// same as the browser-tab build always did.
+const doFetch: typeof fetch = fetch;
 
 export interface HistoryMessage {
   role: "user" | "assistant";

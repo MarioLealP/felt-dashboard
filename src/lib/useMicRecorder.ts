@@ -1,31 +1,22 @@
 import { useCallback, useRef, useState } from "react";
 
-import { invoke } from "@tauri-apps/api/core";
-
-// Inside the packaged Tauri app, recording is done natively (cpal, direct
-// ALSA/PipeWire capture in src-tauri/src/audio.rs) instead of the
-// browser's MediaRecorder. Real bug found 2026-09-12: WebKitGTK's own
-// MediaRecorder reports a live, unmuted track and reaches
-// `state=recording`, but produces zero bytes of actual audio — isolated
-// (by comparing directly against Firefox on this same machine, which
-// captures real audio fine) to WebKitGTK's own capture pipeline, not
-// this app, not permissions, not the OS. The browser-tab build (no
-// `__TAURI_INTERNALS__`) keeps using the real MediaRecorder, since that
-// works fine there.
-const isTauri = "__TAURI_INTERNALS__" in window;
-
+// Previously branched to Tauri's native mic capture (cpal, direct
+// ALSA/PipeWire) on the packaged desktop build, working around a
+// WebKitGTK-on-Linux bug where its own MediaRecorder reported
+// `state=recording` on a live track but produced zero bytes of audio
+// (found 2026-09-12, isolated against Firefox on the same machine). The
+// desktop shell is now pywebview/WebView2 (Windows), which has a working
+// MediaRecorder like any other Chromium-family browser, so this always
+// uses the plain browser path now — same as the browser-tab build always
+// did. Push-to-talk via the global hotkey is handled entirely on the
+// Python side (native `sounddevice` capture, no webview involved at all);
+// this hook only backs the in-window mic button for manual typed-chat use.
 export function useMicRecorder() {
   const [isRecording, setIsRecording] = useState(false);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
   const start = useCallback(async () => {
-    if (isTauri) {
-      await invoke("start_recording");
-      setIsRecording(true);
-      return;
-    }
-
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     const recorder = new MediaRecorder(stream);
     chunksRef.current = [];
@@ -38,13 +29,6 @@ export function useMicRecorder() {
   }, []);
 
   const stop = useCallback((): Promise<Blob> => {
-    if (isTauri) {
-      return invoke<number[]>("stop_recording").then((wavBytes) => {
-        setIsRecording(false);
-        return new Blob([new Uint8Array(wavBytes)], { type: "audio/wav" });
-      });
-    }
-
     return new Promise((resolve) => {
       const recorder = recorderRef.current;
       if (!recorder) {
