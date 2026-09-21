@@ -7,11 +7,21 @@ front-end.
 
 ## What it does
 
-- Text chat against `felt-core`'s `POST /v1/chat`.
+- Text chat against `felt-core`'s `POST /v1/text-chat` (`sendTextChat` in
+  `src/lib/api.ts`) - typed messages now get the same TTS + reaction-
+  animation treatment voice input does, not a silent text-only reply
+  (2026-09-21: felt-core previously had no logging and no TTS on the text
+  path at all, which is why typed chat felt "robotic" - it was replying
+  with no personality prompt, no voice, and no animation reaction).
+  Both this and voice notify `felt-animation` (`FELT_ANIMATION_URL`) on
+  request-start and reply-ready, best-effort/silently-caught so a missing
+  felt-animation never breaks chat.
 - Voice: hold the mic button, `MediaRecorder` captures audio, sent to
   `felt-core`'s `POST /v1/voice-chat` (STT → brain → TTS in one call),
   the reply plays back automatically.
-- Config via `VITE_FELT_CORE_URL` (`.env`, never hardcoded).
+- Config via `VITE_FELT_CORE_URL` and `VITE_FELT_ANIMATION_URL` (`.env`,
+  never hardcoded) - the latter is optional and defaults to
+  `http://127.0.0.1:8421`.
 
 ## Status (2026-09-20)
 
