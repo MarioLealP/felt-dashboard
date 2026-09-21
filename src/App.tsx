@@ -36,7 +36,7 @@ export function App() {
   // the visible conversation. Silent on failure — felt-core being slow to
   // come up isn't something a fresh window should greet with an error
   // banner, only real user actions (send/voice) surface those.
-  useEffect(() => {
+  const loadHistory = useCallback(() => {
     getHistory(SESSION_ID)
       .then((history) => {
         setMessages(
@@ -52,6 +52,24 @@ export function App() {
         // same as before this existed.
       });
   }, []);
+
+  useEffect(() => {
+    loadHistory();
+  }, [loadHistory]);
+
+  // The window mounts once, hidden, at felt-tray startup and is only ever
+  // hidden/shown after that (never remounted) — so the global-hotkey voice
+  // flow, which runs entirely on felt-tray's Python side and never touches
+  // this window, can add messages to felt-core's history that this window's
+  // state never picks up on its own. felt-tray's ChatWindow.show() calls
+  // this via evaluate_js right before showing, so reopening the window
+  // always reflects whatever happened while it was hidden.
+  useEffect(() => {
+    (window as unknown as { __feltReloadHistory?: () => void }).__feltReloadHistory = loadHistory;
+    return () => {
+      delete (window as unknown as { __feltReloadHistory?: () => void }).__feltReloadHistory;
+    };
+  }, [loadHistory]);
 
   // Global-hotkey push-to-talk (mic capture, felt-core call, toast, audio
   // playback) now happens entirely on the Python side of felt-tray and
