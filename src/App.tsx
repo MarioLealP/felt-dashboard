@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ChatMessage, type Message } from "@/components/ChatMessage";
 import { Slab } from "@/components/Slab";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { getHistory, sendChat, sendVoiceChat } from "@/lib/api";
+import { getHistory, sendTextChat, sendVoiceChat } from "@/lib/api";
 import { useMicRecorder } from "@/lib/useMicRecorder";
 import { useTheme } from "@/lib/useTheme";
 
@@ -106,8 +106,12 @@ export function App() {
     setBusy(true);
     setError(null);
     try {
-      const reply = await sendChat(text, SESSION_ID);
-      setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", text: reply }]);
+      const result = await sendTextChat(text, SESSION_ID);
+      setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", text: result.reply }]);
+      if (audioRef.current) {
+        audioRef.current.src = URL.createObjectURL(result.audio);
+        await audioRef.current.play();
+      }
     } catch {
       setError("Couldn't reach Felt. Is felt-core running and reachable?");
     } finally {
