@@ -30,9 +30,26 @@ export interface VoiceChatResult {
   animationTag: string | null;
 }
 
+// WP-15: felt-animation's GET /tone, best-effort - felt-animation not
+// running (or not reachable from this build, e.g. a browser-tab session
+// with no desktop companion) must never block or fail a chat turn just
+// for the tone line. Mirrors felt-tray's own Python fetch_tone().
+async function fetchTone(): Promise<string | null> {
+  try {
+    const response = await doFetch(`${FELT_ANIMATION_URL}/tone`);
+    if (!response.ok) return null;
+    const data = (await response.json()) as { tone?: string };
+    return data.tone ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function sendVoiceChat(audio: Blob, sessionId: string): Promise<VoiceChatResult> {
+  const tone = await fetchTone();
   const form = new FormData();
   form.append("file", audio, "voice.webm");
+  if (tone) form.append("tone", tone);
 
   const response = await doFetch(
     `${FELT_CORE_URL}/v1/voice-chat?session_id=${encodeURIComponent(sessionId)}`,
@@ -106,11 +123,12 @@ export interface TextChatResult {
 // (audio/wav + X-Reply-Text/X-Animation-Tag headers) minus the STT step.
 export async function sendTextChat(message: string, sessionId: string): Promise<TextChatResult> {
   void notifyRequestStarted();
+  const tone = await fetchTone();
 
   const response = await doFetch(`${FELT_CORE_URL}/v1/text-chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message, session_id: sessionId }),
+    body: JSON.stringify({ message, session_id: sessionId, tone }),
   });
   if (!response.ok) {
     throw new Error(`Felt returned ${response.status}`);
