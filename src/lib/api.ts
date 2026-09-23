@@ -64,15 +64,32 @@ async function notifyRequestStarted(): Promise<void> {
   }
 }
 
-async function notifyReplyReady(text: string, animationTag: string | null, audio: Blob): Promise<void> {
+// WP-08: felt-animation is now the single owner of her audio (voice, mouth
+// and reaction start together there) - the chat window used to play the
+// same clip itself via `audioRef`, which double-played once felt-animation
+// started playing too. Returns whether felt-animation actually took it, so
+// the caller can fall back to local playback only when it didn't (down, or
+// timed out) - never both, never neither.
+async function notifyReplyReady(text: string, animationTag: string | null, audio: Blob): Promise<boolean> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 2000);
   try {
     const form = new FormData();
     form.append("text", text);
     form.append("animation_tag", animationTag ?? "");
     form.append("audio", audio, "reply.wav");
-    await doFetch(`${FELT_ANIMATION_URL}/reply_ready`, { method: "POST", body: form });
+    form.append("prompted", "1");
+    const response = await doFetch(`${FELT_ANIMATION_URL}/reply_ready`, {
+      method: "POST",
+      body: form,
+      signal: controller.signal,
+    });
+    return response.ok;
   } catch {
-    // Same - best-effort only.
+    // felt-animation down or unreachable - caller falls back to local playback.
+    return false;
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
@@ -80,6 +97,7 @@ export interface TextChatResult {
   reply: string;
   audio: Blob;
   animationTag: string | null;
+  playedByAnimation: boolean;
 }
 
 // Same TTS + reaction-animation treatment a spoken message gets (2026-09-21,
@@ -98,13 +116,10 @@ export async function sendTextChat(message: string, sessionId: string): Promise<
     throw new Error(`Felt returned ${response.status}`);
   }
   const audioBlob = await response.blob();
-  const result: TextChatResult = {
-    reply: decodeURIComponent(response.headers.get("X-Reply-Text") ?? ""),
-    audio: audioBlob,
-    animationTag: response.headers.get("X-Animation-Tag")
-      ? decodeURIComponent(response.headers.get("X-Animation-Tag")!)
-      : null,
-  };
-  void notifyReplyReady(result.reply, result.animationTag, result.audio);
-  return result;
+  const reply = decodeURIComponent(response.headers.get("X-Reply-Text") ?? "");
+  const animationTag = response.headers.get("X-Animation-Tag")
+    ? decodeURIComponent(response.headers.get("X-Animation-Tag")!)
+    : null;
+  const playedByAnimation = await notifyReplyReady(reply, animationTag, audioBlob);
+  return { reply, audio: audioBlob, animationTag, playedByAnimation };
 }

@@ -108,7 +108,11 @@ export function App() {
     try {
       const result = await sendTextChat(text, SESSION_ID);
       setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", text: result.reply }]);
-      if (audioRef.current) {
+      // WP-08: felt-animation already played this in sync with her mouth/
+      // reaction when it took the POST - only play it here ourselves if it
+      // didn't (down, unreachable), so she's never silent but also never
+      // double-voiced.
+      if (!result.playedByAnimation && audioRef.current) {
         audioRef.current.src = URL.createObjectURL(result.audio);
         await audioRef.current.play();
       }
