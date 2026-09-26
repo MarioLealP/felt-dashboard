@@ -107,7 +107,10 @@ export function App() {
     setError(null);
     try {
       const result = await sendTextChat(text, SESSION_ID);
-      setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", text: result.reply }]);
+      setMessages((prev) => [
+        ...prev,
+        { id: crypto.randomUUID(), role: "assistant", text: result.reply },
+      ]);
       // WP-08: felt-animation already played this in sync with her mouth/
       // reaction when it took the POST - only play it here ourselves if it
       // didn't (down, unreachable), so she's never silent but also never

@@ -87,7 +87,11 @@ async function notifyRequestStarted(): Promise<void> {
 // started playing too. Returns whether felt-animation actually took it, so
 // the caller can fall back to local playback only when it didn't (down, or
 // timed out) - never both, never neither.
-async function notifyReplyReady(text: string, animationTag: string | null, audio: Blob): Promise<boolean> {
+async function notifyReplyReady(
+  text: string,
+  animationTag: string | null,
+  audio: Blob,
+): Promise<boolean> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 2000);
   try {
