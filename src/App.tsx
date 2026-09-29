@@ -3,7 +3,44 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ChatMessage, type Message } from "@/components/ChatMessage";
 import { Slab } from "@/components/Slab";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { getHistory, sendTextChat, sendVoiceChat } from "@/lib/api";
+import {
+  getHistory,
+  newReplyGeneration,
+  replyChunks,
+  sendTextChat,
+  sendVoiceChat,
+  type ReplyStream,
+} from "@/lib/api";
+
+// WP-54: play chunk 0, then each later chunk of a streamed reply as it
+// lands, one after another on the same element.
+/* eslint-disable no-await-in-loop -- chunks must be fetched and played strictly in order */
+async function playLocally(
+  audio: HTMLAudioElement,
+  first: Blob,
+  stream: ReplyStream | null,
+  generation: number,
+): Promise<void> {
+  const ended = () =>
+    new Promise<void>((resolve) =>
+      audio.addEventListener("ended", () => resolve(), { once: true }),
+    );
+  audio.src = URL.createObjectURL(first);
+  await audio.play();
+  if (!stream) return;
+  const rest = replyChunks(stream, generation);
+  let next = rest.next();
+  await ended();
+  for (;;) {
+    const item = await next;
+    if (item.done) return;
+    next = rest.next();
+    audio.src = URL.createObjectURL(item.value.audio);
+    await audio.play();
+    await ended();
+  }
+}
+/* eslint-enable no-await-in-loop */
 import { useMicRecorder } from "@/lib/useMicRecorder";
 import { useTheme } from "@/lib/useTheme";
 
@@ -88,8 +125,7 @@ export function App() {
         { id: crypto.randomUUID(), role: "assistant", text: result.reply },
       ]);
       if (audioRef.current) {
-        audioRef.current.src = URL.createObjectURL(result.audio);
-        await audioRef.current.play();
+        await playLocally(audioRef.current, result.audio, result.stream, newReplyGeneration());
       }
     } catch {
       setError("Voice chat failed. Is felt-voice reachable?");
@@ -116,8 +152,7 @@ export function App() {
       // didn't (down, unreachable), so she's never silent but also never
       // double-voiced.
       if (!result.playedByAnimation && audioRef.current) {
-        audioRef.current.src = URL.createObjectURL(result.audio);
-        await audioRef.current.play();
+        await playLocally(audioRef.current, result.audio, result.stream, result.generation);
       }
     } catch {
       setError("Couldn't reach Felt. Is felt-core running and reachable?");

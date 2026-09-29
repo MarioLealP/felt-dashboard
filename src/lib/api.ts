@@ -28,6 +28,8 @@ export interface VoiceChatResult {
   reply: string;
   audio: Blob;
   animationTag: string | null;
+  // WP-54: this path plays locally, so the caller plays the rest too.
+  stream: ReplyStream | null;
 }
 
 // WP-15: felt-animation's GET /tone, best-effort - felt-animation not
@@ -66,8 +68,89 @@ export async function sendVoiceChat(audio: Blob, sessionId: string): Promise<Voi
     animationTag: response.headers.get("X-Animation-Tag")
       ? decodeURIComponent(response.headers.get("X-Animation-Tag")!)
       : null,
+    stream: readReplyStream(response),
   };
 }
+
+// WP-54: a multi-sentence reply arrives as chunk 0 (the response body)
+// plus `X-Reply-Stream`/`X-Reply-Chunks`; chunks 1..N-1 come from
+// felt-core's /v1/reply/{id}/chunk/{n} long-poll as they're synthesised.
+export interface ReplyStream {
+  id: string;
+  chunks: number;
+}
+
+export interface ReplyChunk {
+  audio: Blob;
+  text: string;
+}
+
+function readReplyStream(response: Response): ReplyStream | null {
+  const id = response.headers.get("X-Reply-Stream");
+  const chunks = Number(response.headers.get("X-Reply-Chunks") ?? "0");
+  return id && chunks >= 2 ? { id, chunks } : null;
+}
+
+// A newer reply bumps this; an older stream stops at its next chunk.
+let replyGeneration = 0;
+
+export function newReplyGeneration(): number {
+  replyGeneration += 1;
+  return replyGeneration;
+}
+
+// Yields chunks 1..N-1 in order. Stops on done (204), expired (404),
+// failed (502), a second timeout (408), a network error, or a newer reply.
+/* eslint-disable no-await-in-loop -- chunks must be fetched and played strictly in order */
+export async function* replyChunks(
+  stream: ReplyStream,
+  generation: number,
+): AsyncGenerator<ReplyChunk> {
+  for (let n = 1; n < stream.chunks; n++) {
+    let response: Response | null = null;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      if (generation !== replyGeneration) return;
+      try {
+        response = await doFetch(
+          `${FELT_CORE_URL}/v1/reply/${encodeURIComponent(stream.id)}/chunk/${n}?timeout=30`,
+        );
+      } catch {
+        return;
+      }
+      if (response.status !== 408) break;
+    }
+    if (!response || response.status !== 200 || generation !== replyGeneration) return;
+    yield {
+      audio: await response.blob(),
+      text: decodeURIComponent(response.headers.get("X-Chunk-Text") ?? ""),
+    };
+  }
+}
+/* eslint-enable no-await-in-loop */
+
+async function notifyReplyAppend(chunk: ReplyChunk): Promise<boolean> {
+  try {
+    const form = new FormData();
+    form.append("text", chunk.text);
+    form.append("audio", chunk.audio, "chunk.wav");
+    const response = await doFetch(`${FELT_ANIMATION_URL}/reply_append`, {
+      method: "POST",
+      body: form,
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+// felt-animation owns playback: hand it the remaining chunks as they land.
+/* eslint-disable no-await-in-loop -- chunks must be fetched and played strictly in order */
+async function streamToAnimation(stream: ReplyStream, generation: number): Promise<void> {
+  for await (const chunk of replyChunks(stream, generation)) {
+    if (!(await notifyReplyAppend(chunk))) return;
+  }
+}
+/* eslint-enable no-await-in-loop */
 
 // Best-effort - felt-animation is desktop-only and optional, a chat
 // window on some other client shouldn't fail (or even show an error) just
@@ -119,6 +202,10 @@ export interface TextChatResult {
   audio: Blob;
   animationTag: string | null;
   playedByAnimation: boolean;
+  // Set when felt-animation did NOT take chunk 0, so the caller plays the
+  // rest locally (see playLocally in App.tsx); null otherwise.
+  stream: ReplyStream | null;
+  generation: number;
 }
 
 // Same TTS + reaction-animation treatment a spoken message gets (2026-09-21,
@@ -142,6 +229,18 @@ export async function sendTextChat(message: string, sessionId: string): Promise<
   const animationTag = response.headers.get("X-Animation-Tag")
     ? decodeURIComponent(response.headers.get("X-Animation-Tag")!)
     : null;
+  const generation = newReplyGeneration();
+  const stream = readReplyStream(response);
   const playedByAnimation = await notifyReplyReady(reply, animationTag, audioBlob);
-  return { reply, audio: audioBlob, animationTag, playedByAnimation };
+  if (playedByAnimation && stream) {
+    void streamToAnimation(stream, generation);
+  }
+  return {
+    reply,
+    audio: audioBlob,
+    animationTag,
+    playedByAnimation,
+    stream: playedByAnimation ? null : stream,
+    generation,
+  };
 }
