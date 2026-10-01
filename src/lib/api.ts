@@ -1,4 +1,4 @@
-import { FELT_ANIMATION_URL, FELT_CORE_URL } from "@/lib/config";
+import { FELT_ANIMATION_URL, FELT_CORE_TOKEN, FELT_CORE_URL } from "@/lib/config";
 
 // Previously routed through Tauri's own HTTP client on the packaged
 // desktop build, to work around a WebKitGTK-on-Linux bug where any POST
@@ -6,7 +6,16 @@ import { FELT_ANIMATION_URL, FELT_CORE_URL } from "@/lib/config";
 // 2026-09-12). The desktop shell is now pywebview/WebView2 (Windows),
 // which doesn't have that bug, so plain `fetch` is used unconditionally —
 // same as the browser-tab build always did.
-const doFetch: typeof fetch = fetch;
+// WP-55: felt-core requests carry its bearer token; felt-animation's don't.
+const doFetch: typeof fetch = (input, init) => {
+  const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+  if (!FELT_CORE_TOKEN || !url.startsWith(FELT_CORE_URL)) {
+    return fetch(input, init);
+  }
+  const headers = new Headers(init?.headers);
+  headers.set("Authorization", `Bearer ${FELT_CORE_TOKEN}`);
+  return fetch(input, { ...init, headers });
+};
 
 export interface HistoryMessage {
   role: "user" | "assistant";

@@ -9,6 +9,13 @@ if (!felt_core_url) {
 }
 export const FELT_CORE_URL: string = felt_core_url;
 
+/** WP-55: felt-core's API token (the server's FELT_API_TOKEN), sent as a
+ * Bearer header on every felt-core request. Optional: unset sends none, which
+ * works while felt-core has no token configured. Baked into the local build
+ * only (the .env and dist/ are never committed). */
+export const FELT_CORE_TOKEN: string | undefined =
+  (import.meta.env.VITE_FELT_CORE_TOKEN as string | undefined) || undefined;
+
 /** felt-animation is desktop-only and optional (2026-09-21) - unlike
  * FELT_CORE_URL this doesn't throw when unset, since chat should still
  * work without it (she just won't react/lipsync to typed messages). */
