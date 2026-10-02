@@ -27,9 +27,18 @@
 }
 
 html,
-body,
-#root {
+body {
   height: 100%;
+  overscroll-behavior: none;
+}
+
+/* Pinned to the visible area (dvh tracks the mobile browser's toolbar
+   sliding in and out), so the page never scrolls and leaves no void below:
+   only the conversation scrolls, inside it. Mario on Firefox Android 10-02. */
+#root {
+  position: fixed;
+  inset: 0;
+  height: 100dvh;
 }
 
 body {
