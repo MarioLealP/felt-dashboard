@@ -60,10 +60,13 @@ export function Talk() {
   const [olderDone, setOlderDone] = useState(false);
   const threadRef = useRef<HTMLDivElement>(null);
 
+  // The thread lays out bottom-up (flex-col-reverse), so the browser opens it
+  // on the newest message by itself and keeps the position steady when older
+  // pages are added above. scrollTop 0 is the bottom.
   const toBottom = () =>
     requestAnimationFrame(() => {
       const el = threadRef.current;
-      if (el) el.scrollTop = el.scrollHeight;
+      if (el) el.scrollTop = 0;
     });
 
   useEffect(() => {
@@ -72,10 +75,6 @@ export function Talk() {
       getHistory().then((page) => {
         if (!alive) return;
         setMessages(page);
-        requestAnimationFrame(() => {
-          const el = threadRef.current;
-          if (el) el.scrollTop = el.scrollHeight;
-        });
       });
     load().catch((e: unknown) => alive && setError((e as Error).message));
     // the tray window reloads the conversation when it's shown again
@@ -90,17 +89,12 @@ export function Talk() {
   async function loadOlder() {
     const first = messages[0];
     if (!first || olderDone) return;
-    const el = threadRef.current;
-    const before = el?.scrollHeight ?? 0;
     const older = await getHistory(first.id);
     if (older.length === 0) {
       setOlderDone(true);
       return;
     }
     setMessages((prev) => [...older, ...prev]);
-    requestAnimationFrame(() => {
-      if (el) el.scrollTop = el.scrollHeight - before;
-    });
   }
 
   async function send(e: FormEvent) {
@@ -150,50 +144,51 @@ export function Talk() {
 
       <div
         ref={threadRef}
-        className="thread flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto pt-1 pr-16 pb-2"
+        className="thread flex min-h-0 flex-1 flex-col-reverse overflow-y-auto"
         aria-live="polite"
       >
-        <div className="flex-1" />
-        {!olderDone && messages.length >= 50 ? (
-          <button
-            type="button"
-            onClick={() => void loadOlder()}
-            className="font-hand text-pencil ml-[calc(var(--margin)+14px)] min-h-9 self-start bg-transparent text-sm underline decoration-wavy underline-offset-4"
-          >
-            earlier pages
-          </button>
-        ) : null}
-        {messages.map((m) => (
-          <Line key={m.id} message={m} fresh={freshIds.has(m.id)} />
-        ))}
-        {writing ? (
-          <div className="flex items-center">
-            <Gutter>
-              <span className="font-display text-sage text-[11px] font-black">FELT</span>
-            </Gutter>
-            <div className="font-hand flex items-center gap-2 pl-3.5 text-sm text-[#9a8f99]">
-              <svg
-                className="pen"
-                width="34"
-                height="14"
-                viewBox="0 0 34 14"
-                fill="none"
-                aria-hidden="true"
-              >
-                <path
-                  d="M1 9 C 5 1, 8 13, 12 6 S 19 2, 22 8 S 29 10, 33 4"
-                  stroke="#a9c3a5"
-                  strokeWidth="1.6"
-                  strokeLinecap="round"
-                />
-              </svg>
-              writing…
+        <div className="flex flex-col gap-2.5 pt-1 pr-16 pb-2">
+          {!olderDone && messages.length >= 50 ? (
+            <button
+              type="button"
+              onClick={() => void loadOlder()}
+              className="font-hand text-pencil ml-[calc(var(--margin)+14px)] min-h-9 self-start bg-transparent text-sm underline decoration-wavy underline-offset-4"
+            >
+              earlier pages
+            </button>
+          ) : null}
+          {messages.map((m) => (
+            <Line key={m.id} message={m} fresh={freshIds.has(m.id)} />
+          ))}
+          {writing ? (
+            <div className="flex items-center">
+              <Gutter>
+                <span className="font-display text-sage text-[11px] font-black">FELT</span>
+              </Gutter>
+              <div className="font-hand flex items-center gap-2 pl-3.5 text-sm text-[#9a8f99]">
+                <svg
+                  className="pen"
+                  width="34"
+                  height="14"
+                  viewBox="0 0 34 14"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M1 9 C 5 1, 8 13, 12 6 S 19 2, 22 8 S 29 10, 33 4"
+                    stroke="#a9c3a5"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                  />
+                </svg>
+                writing…
+              </div>
             </div>
-          </div>
-        ) : null}
-        {error ? (
-          <p className="font-hand text-rasp m-0 pl-[calc(var(--margin)+14px)] text-sm">{error}</p>
-        ) : null}
+          ) : null}
+          {error ? (
+            <p className="font-hand text-rasp m-0 pl-[calc(var(--margin)+14px)] text-sm">{error}</p>
+          ) : null}
+        </div>
       </div>
 
       <div aria-hidden="true" className="bg-rasp mt-1 h-px opacity-30" />
