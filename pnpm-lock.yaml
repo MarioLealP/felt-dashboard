@@ -8,12 +8,27 @@ importers:
 
   .:
     dependencies:
+      '@fontsource/ibm-plex-mono':
+        specifier: 5.3.0
+        version: 5.3.0
+      '@fontsource/klee-one':
+        specifier: 5.3.0
+        version: 5.3.0
+      '@fontsource/zen-maru-gothic':
+        specifier: 5.3.0
+        version: 5.3.0
+      perfect-freehand:
+        specifier: 1.2.3
+        version: 1.2.3
       react:
         specifier: 19.2.8
         version: 19.2.8
       react-dom:
         specifier: 19.2.8
         version: 19.2.8(react@19.2.8)
+      rough-notation:
+        specifier: 0.5.1
+        version: 0.5.1
     devDependencies:
       '@tailwindcss/vite':
         specifier: 4.3.3
@@ -27,6 +42,9 @@ importers:
       '@testing-library/react':
         specifier: 16.3.3
         version: 16.3.3(@testing-library/dom@10.4.1)(@types/react-dom@19.2.5(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@testing-library/user-event':
+        specifier: 14.6.7
+        version: 14.6.7(@testing-library/dom@10.4.1)
       '@types/react':
         specifier: 19.2.18
         version: 19.2.18
@@ -131,6 +149,15 @@ packages:
     peerDependenciesMeta:
       '@noble/hashes':
         optional: true
+
+  '@fontsource/ibm-plex-mono@5.3.0':
+    resolution: {integrity: sha512-eTgnZjZEGk1QtD3ZstF+Vclo2HLAni8YMy34/DxllwZvyz1lR/1RF/xTiAquOBO7MvqBx8D2Ig2WCPMVfdZu7Q==}
+
+  '@fontsource/klee-one@5.3.0':
+    resolution: {integrity: sha512-1mnMRQO70AnTCHaWy5ovYKjbvszpOp7//bMDZ+PnjBMmar5YRcbskVzM4u+Syd8CMWw353R3BvsrsKQrwVRnEw==}
+
+  '@fontsource/zen-maru-gothic@5.3.0':
+    resolution: {integrity: sha512-BuigfmzszMR3AOyAMSocQZ9bEq9o5sGCMOC/laI4TMpba1/KB1jxsdNFXWMUz02wVPd4vAVuMhsV00AQizFj3w==}
 
   '@jridgewell/gen-mapping@0.3.13':
     resolution: {integrity: sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA==}
@@ -593,6 +620,12 @@ packages:
         optional: true
       '@types/react-dom':
         optional: true
+
+  '@testing-library/user-event@14.6.7':
+    resolution: {integrity: sha512-MPCpX8bxe8zS+JmmTwLp8jd0dy1rAm60Te/SL8JrQM3qvQJcBOs1d7IefJMyZzqM3EWBrDn/LWDt1BCGu4ASfg==}
+    engines: {node: '>=12', npm: '>=6'}
+    peerDependencies:
+      '@testing-library/dom': '>=7.21.4'
 
   '@types/aria-query@5.0.4':
     resolution: {integrity: sha512-rfT93uj5s0PRL7EzccGMs3brplhcrghnDoV26NqKhCAS1hVo+WdNsPvE/yb6ilfr5hi2MEk6d5EWJTKdxg8jVw==}
@@ -1100,6 +1133,9 @@ packages:
   pathe@2.0.3:
     resolution: {integrity: sha512-WUjGcAqP1gQacoQe+OBJsFA7Ld4DyXuUIjZ5cc75cLHvJ7dtNsTugphxIADwspS+AraAUePCKrSVtPLFj/F88w==}
 
+  perfect-freehand@1.2.3:
+    resolution: {integrity: sha512-bHZSfqDHGNlPpgH2yxXgPHlQSPpEbo+qg7li0M78J9vNAi2yjwLeA4x79BEQhX44lEWpCLSFCeRZwpw0niiXPA==}
+
   picocolors@1.1.1:
     resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
 
@@ -1143,6 +1179,9 @@ packages:
     resolution: {integrity: sha512-vMM4q3aixf46GiF1Kok8jDPFsEpXgFWGjUHXNkNHNm+Y2adXAG2dbX91jkti3i0ZRsOlcmbuzAz1poObSHCmUA==}
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
+
+  rough-notation@0.5.1:
+    resolution: {integrity: sha512-ITHofTzm13cWFVfoGsh/4c/k2Mg8geKgBCwex71UZLnNuw403tCRjYPQ68jSAd37DMbZIePXPjDgY0XdZi9HPw==}
 
   saxes@6.0.0:
     resolution: {integrity: sha512-xAg7SOnEhrm5zI3puOOKyy1OMcMlIJZYNJY7xLBwSze0UjhPLnWfj2GF2EpT0jmzaJKIWKHLsaSSajf35bcYnA==}
@@ -1395,6 +1434,12 @@ snapshots:
   '@csstools/css-tokenizer@4.0.0': {}
 
   '@exodus/bytes@1.15.1': {}
+
+  '@fontsource/ibm-plex-mono@5.3.0': {}
+
+  '@fontsource/klee-one@5.3.0': {}
+
+  '@fontsource/zen-maru-gothic@5.3.0': {}
 
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:
@@ -1680,6 +1725,10 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.2.18
       '@types/react-dom': 19.2.5(@types/react@19.2.18)
+
+  '@testing-library/user-event@14.6.7(@testing-library/dom@10.4.1)':
+    dependencies:
+      '@testing-library/dom': 10.4.1
 
   '@types/aria-query@5.0.4': {}
 
@@ -2082,6 +2131,8 @@ snapshots:
 
   pathe@2.0.3: {}
 
+  perfect-freehand@1.2.3: {}
+
   picocolors@1.1.1: {}
 
   picomatch@4.0.7: {}
@@ -2136,6 +2187,8 @@ snapshots:
       '@rolldown/binding-openharmony-arm64': 1.2.6
       '@rolldown/binding-win32-arm64-msvc': 1.2.6
       '@rolldown/binding-win32-x64-msvc': 1.2.6
+
+  rough-notation@0.5.1: {}
 
   saxes@6.0.0:
     dependencies:

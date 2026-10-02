@@ -1,0 +1,156 @@
+/* The Felt app's look (WP-42, designed with Mario 2026-10-02): the whole
+   screen is one dark notebook page — spiral rings across the top, a
+   raspberry margin line, sticky flags on the right, no boxes around messages.
+   Tailwind utilities do layout in the markup; this file holds the paper, the
+   page furniture and the motion. Palette three (docs/identity/palettes). */
+
+@import "tailwindcss";
+
+@theme {
+  --color-paper: #1b191e;
+  --color-ink: #f5f0f6;
+  --color-ink-soft: #d9cdd6;
+  --color-pencil: #8b8090;
+  --color-rasp: #da4167;
+  --color-salmon: #ffb59e;
+  --color-sage: #a9c3a5;
+  --color-kraft: #d6bf9f;
+  --font-display: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", system-ui, sans-serif;
+  --font-hand: "Klee One", "Hiragino Mincho ProN", Georgia, serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --radius-sm: 2px;
+}
+
+:root {
+  color-scheme: dark;
+  --margin: 76px;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-paper);
+  background-image:
+    linear-gradient(rgba(245, 240, 246, 0.05) 1px, transparent 1px),
+    repeating-linear-gradient(33deg, rgba(255, 255, 255, 0.013) 0 1px, transparent 1px 4px),
+    repeating-linear-gradient(-61deg, rgba(0, 0, 0, 0.16) 0 1px, transparent 1px 5px);
+  background-size:
+    100% 30px,
+    auto,
+    auto;
+  background-position:
+    0 8px,
+    0 0,
+    0 0;
+  color: var(--color-ink);
+  font-family: var(--font-display);
+  overflow: hidden;
+}
+
+.ring {
+  width: 12px;
+  height: 22px;
+  border-radius: 6px;
+  background: #0b0a0d;
+  box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.9);
+  position: relative;
+}
+.ring::after {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: -10px;
+  width: 6px;
+  height: 18px;
+  border-radius: 3px;
+  background: #5a5560;
+}
+
+.flag {
+  position: relative;
+  box-shadow: -2px 2px 0 rgba(0, 0, 0, 0.35);
+  animation: flag-in 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+.flag::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.thread {
+  scrollbar-width: none;
+}
+.thread::-webkit-scrollbar {
+  display: none;
+}
+
+.line-fresh {
+  animation: rise 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.note-fresh {
+  animation: write 1.6s steps(28, end) both 1.4s;
+}
+.pen path {
+  stroke-dasharray: 60;
+  animation: scribble 1.4s ease-in-out infinite;
+}
+
+@keyframes flag-in {
+  from {
+    transform: translateX(30px) rotate(var(--tilt));
+  }
+  to {
+    transform: translateX(0) rotate(var(--tilt));
+  }
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes write {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+@keyframes scribble {
+  0% {
+    stroke-dashoffset: 60;
+  }
+  60% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-salmon);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flag,
+  .line-fresh,
+  .note-fresh,
+  .pen path {
+    animation: none;
+  }
+}

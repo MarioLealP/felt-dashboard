@@ -2,7 +2,7 @@
   "name": "felt-dashboard",
   "version": "0.1.0",
   "private": true,
-  "description": "Starter for clockmost front-ends — React + Vite + Tailwind v4 on the Endfield design system, linted and formatted by oxc.",
+  "description": "The Felt app: her notebook (Talk, Margins, Diary, Lists, Systems), served from clockmost behind SSO (WP-42).",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -15,18 +15,23 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
-    "check": "pnpm fmt:check && pnpm lint && pnpm typecheck && pnpm test",
-    "sync:endfield": "bash scripts/sync-endfield.sh"
+    "check": "pnpm fmt:check && pnpm lint && pnpm typecheck && pnpm test"
   },
   "dependencies": {
+    "@fontsource/ibm-plex-mono": "5.3.0",
+    "@fontsource/klee-one": "5.3.0",
+    "@fontsource/zen-maru-gothic": "5.3.0",
+    "perfect-freehand": "1.2.3",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "rough-notation": "0.5.1"
   },
   "devDependencies": {
     "@tailwindcss/vite": "4.3.3",
     "@testing-library/dom": "10.4.1",
     "@testing-library/jest-dom": "7.0.1",
     "@testing-library/react": "16.3.3",
+    "@testing-library/user-event": "14.6.7",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.5",
     "@vitejs/plugin-react": "6.1.1",

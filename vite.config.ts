@@ -2,7 +2,10 @@ import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
+// WP-42.2: served at felt.clockmost.com/app/, with felt-core's /v1/app/* on
+// the same origin behind SSO.
 export default defineConfig({
+  base: "/app/",
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
@@ -12,7 +15,7 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
-    css: true,
+    css: false,
     restoreMocks: true,
   },
 });

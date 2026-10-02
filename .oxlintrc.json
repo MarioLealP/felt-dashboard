@@ -29,5 +29,5 @@
       }
     }
   ],
-  "ignorePatterns": ["dist", "coverage", "src/styles/endfield.css"]
+  "ignorePatterns": ["dist", "coverage"]
 }

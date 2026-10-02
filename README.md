@@ -1,114 +1,42 @@
-# felt-dashboard
+# felt-dashboard — the Felt app
 
-The actual way to use [Felt](https://git.clockmost.com/Benylin/Felt) — a
-chat UI (text + voice) talking to `felt-core`'s API. Forked from
-`clockmost-frontend-template`, on the same stack as every other clockmost
-front-end.
+Felt's notebook: one dark page, spiral rings across the top, a raspberry
+margin line, sticky flags for **talk · margins · diary · lists · systems**,
+and her ink (circles, underlines, notes) drawn by hand. Designed with Mario
+in WP-42 (design canvas and decisions: `Felt/docs/plans/impl/WP-42-felt-app.md`).
 
-## What it does
+## Where it runs
 
-- Text chat against `felt-core`'s `POST /v1/text-chat` (`sendTextChat` in
-  `src/lib/api.ts`) - typed messages now get the same TTS + reaction-
-  animation treatment voice input does, not a silent text-only reply
-  (2026-09-21: felt-core previously had no logging and no TTS on the text
-  path at all, which is why typed chat felt "robotic" - it was replying
-  with no personality prompt, no voice, and no animation reaction).
-  Both this and voice notify `felt-animation` (`FELT_ANIMATION_URL`) on
-  request-start and reply-ready, best-effort/silently-caught so a missing
-  felt-animation never breaks chat.
-- Voice: hold the mic button, `MediaRecorder` captures audio, sent to
-  `felt-core`'s `POST /v1/voice-chat` (STT → brain → TTS in one call),
-  the reply plays back automatically.
-- Config via `VITE_FELT_CORE_URL` and `VITE_FELT_ANIMATION_URL` (`.env`,
-  never hardcoded) - the latter is optional and defaults to
-  `http://127.0.0.1:8421`.
+- **Served from clockmost** at `https://felt.clockmost.com/app/` (VPN/LAN only,
+  behind SSO), from its own container (`felt-app`). Push to `main` → CI checks,
+  builds the image and the deploy loop rolls it out (WP-53).
+- **Talks to felt-core** at `/v1/app/*` on the same origin. Caddy's SSO
+  forward-auth is the lock; the build holds **no token or address**.
+- **Phone and laptop:** Tauri shells that open the hosted app (WP-42.6).
+- **Desktop:** the tray's Felt window opens the hosted app. There, sending goes
+  through the tray (`window.pywebview.api.text_chat`) so she still speaks and
+  lip-syncs typed replies; elsewhere replies are text only.
 
-## Status (2026-09-20)
+## Stack
 
-Built and running. Originally slated to ship wrapped in Tauri (Rust); after
-the desktop's Linux→Windows migration that plan was dropped in favor of a
-Python shell (`felt-tray`, in the sibling `felt-tray/` project) hosting this
-built frontend in a `pywebview`/WebView2 window — no Rust dependency, no
-`src-tauri/`. This repo builds the static frontend only; felt-tray owns the
-tray icon, global hotkey, native mic capture for push-to-talk, toast
-notifications, and the felt-overlay relay.
+React 19 · Vite 8 · TypeScript 7 · Tailwind v4 (layout) + `src/styles/notebook.css`
+(paper, page furniture, motion) · Rough Notation (her marks) · self-hosted
+fonts (Zen Maru Gothic, Klee One, IBM Plex Mono via @fontsource, Latin subsets)
+· oxlint/oxfmt · Vitest. Hash routing (`#talk`, `#diary`…), no router library.
 
-**Stack**
+## Her ink
 
-| Concern   | Choice                                                     | Why                                                                                                                     |
-| --------- | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Framework | **React 19** + **Vite 8**                                  | matches the earlier `endfield-dashboard`; instant HMR; the Vite 8 React plugin transforms JSX with **oxc**, no Babel    |
-| Language  | **TypeScript 7** (native compiler)                         | `tsc --noEmit` is the typecheck gate; fast                                                                              |
-| Styling   | **Tailwind v4** (`@tailwindcss/vite`) + **`endfield.css`** | Tailwind for layout/spacing, the `.ef-*` design system for components — both fed by the same `--ef-*` custom properties |
-| Lint      | **oxlint**                                                 | Rust-fast; replaces ESLint                                                                                              |
-| Format    | **oxfmt**                                                  | Rust-fast, Prettier-compatible; replaces Prettier                                                                       |
-| Test      | **Vitest** + Testing Library (jsdom)                       |                                                                                                                         |
-| CI        | **Gitea Actions** (`.gitea/workflows/ci.yml`)              | one `smell` job: fmt → lint → types → test → build                                                                      |
+`src/lib/ink.ts`: every mark is seeded from its id (same shape on every
+redraw), plays only the first time it's seen, and draws at pen speed. Spike:
+WP-42.1.
 
-Prettier and ESLint are **not** installed and should stay that way.
+## Develop
 
-## Commands
-
-```sh
+```bash
 pnpm install
-pnpm dev            # vite dev server
-pnpm check          # everything CI runs: fmt:check, lint, typecheck, test
-pnpm fmt            # format in place (oxfmt)
-pnpm lint           # oxlint, warnings fail (--deny-warnings)
-pnpm lint:fix       # oxlint autofix
-pnpm build          # tsc --noEmit && vite build
-pnpm test:watch     # vitest watch
-pnpm sync:endfield  # re-vendor src/styles/endfield.css from the design repo
+pnpm check   # fmt:check, lint, typecheck, test
+pnpm build   # dist/ (base /app/)
 ```
 
-## The styling split
-
-`endfield.css` (the design system, vendored in `src/styles/`) owns **components,
-motifs and structure** — `.ef-card`, `.ef-gauge`, `.ef-slab`, the chamfer, the
-diamond marker, HUD/DOC theming. Tailwind owns **layout, spacing, flex/grid and
-one-off colour**.
-
-`src/styles/theme.css` bridges them: the `--ef-*` tokens are mapped into
-Tailwind's scale with `@theme inline`, so `bg-surface`, `border-line`,
-`text-ink-2`, `font-mono` etc. resolve to the live `--ef-*` values and follow the
-`[data-theme]` swap. Tailwind's `rounded-*` scale is zeroed — Endfield is radius-0.
-
-```tsx
-// components: the design system's classes
-<div className="ef-card ef-brackets">…</div>
-
-// layout: Tailwind, on the shared tokens
-<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">…</div>
-```
-
-Two extra utilities from `theme.css`: `chamfer` (the two-corner clip) and `rail`
-(the 3px active left edge).
-
-## HUD ⇄ DOC
-
-`useTheme()` reflects the surface onto `<html data-theme>` and remembers it per
-browser. `index.html` ships `data-theme="dark"` so there's no flash. Endfield is
-dark-first; `light` is the "DOC" document surface.
-
-## The design system
-
-`src/styles/endfield.css` is a **vendored copy** — the source is
-`git.clockmost.com/Benylin/endfield-design`. When that ships a new version:
-
-```sh
-pnpm sync:endfield
-# or, from a local checkout:
-EF_SRC=~/Projects/endfield-design/endfield.css pnpm sync:endfield
-```
-
-Fonts (Chakra Petch / Jost / JetBrains Mono) are loaded from Google Fonts in
-`index.html`.
-
-## Notes
-
-- `oxfmt` is pre-1.0 (0.65) — pinned exact; expect the occasional formatting
-  churn on upgrade. `oxlint` is 1.x and stable.
-- `@vitejs/plugin-react@6` is Vite 8's oxc-based React plugin (not the older
-  standalone `@vitejs/plugin-react-oxc`, which stops at Vite 7).
-- `.oxlintrc.json` allows unassigned imports only for `*.css` and
-  `@testing-library/*`; anything else `import "x"` is flagged.
+`pnpm dev` serves the UI; the API needs felt.clockmost.com's SSO, so test API
+flows through the deployed app or the unit tests.
