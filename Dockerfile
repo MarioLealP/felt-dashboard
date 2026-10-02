@@ -9,6 +9,12 @@ COPY . .
 RUN pnpm build
 
 FROM caddy:2.11.4-alpine
+# The stock binary carries cap_net_bind_service as a file capability; with
+# cap_drop ALL + no-new-privileges (felt-app's compose) the kernel refuses to
+# exec it. We listen on 8080, so strip the capability instead of loosening.
+RUN apk add --no-cache libcap \
+    && setcap -r /usr/bin/caddy \
+    && apk del libcap
 COPY deploy/Caddyfile /etc/caddy/Caddyfile
 COPY --from=build /src/dist /srv/app
 EXPOSE 8080
