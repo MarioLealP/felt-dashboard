@@ -6,6 +6,7 @@ import { usePage } from "@/lib/route";
 import { useNotices } from "@/lib/stream";
 import { Margins } from "@/pages/Margins";
 import { Soon } from "@/pages/Soon";
+import { Controls } from "@/pages/Controls";
 import { Lists } from "@/pages/Lists";
 import { Systems } from "@/pages/Systems";
 import { Talk } from "@/pages/Talk";
@@ -33,6 +34,8 @@ export function App() {
         <Systems />
       ) : page === "lists" ? (
         <Lists />
+      ) : page === "controls" ? (
+        <Controls />
       ) : (
         <Soon page={page} />
       )}

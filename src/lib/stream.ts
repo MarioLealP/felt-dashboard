@@ -11,6 +11,7 @@ export type Notice =
   | { type: "marks" }
   | { type: "lists" }
   | { type: "systems" }
+  | { type: "controls" }
   | { type: "hello" };
 
 type Listener = (notice: Notice) => void;
@@ -38,6 +39,7 @@ function open() {
   source.addEventListener("marks", () => emit({ type: "marks" }));
   source.addEventListener("lists", () => emit({ type: "lists" }));
   source.addEventListener("systems", () => emit({ type: "systems" }));
+  source.addEventListener("controls", () => emit({ type: "controls" }));
 }
 
 export function subscribe(listener: Listener): () => void {
