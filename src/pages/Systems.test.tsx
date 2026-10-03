@@ -95,6 +95,8 @@ describe("routing", () => {
     expect(idFromHash("#systems/12")).toBe(12);
     expect(idFromHash("#systems")).toBeNull();
     expect(idFromHash("#systems/x")).toBeNull();
+    expect(idFromHash("#systems/12?ask")).toBe(12);
+    expect(pageFromHash("#systems/12?ask")).toBe("systems");
   });
 });
 
@@ -132,6 +134,14 @@ describe("Systems", () => {
     expect(screen.getByText("2 steps")).toBeTruthy();
     expect(screen.getByText("Telnet connect on port 23")).toBeTruthy();
     expect(screen.getByText("sudo felt-responder-join d768c434")).toBeTruthy();
+  });
+
+  it("goes straight to Talk for a pop-up's ask Felt", async () => {
+    stubFetch([]);
+    window.location.hash = "#systems/7?ask";
+    render(<Systems />);
+    await waitFor(() => expect(window.location.hash).toBe("#talk"));
+    expect(pendingAnswer()?.id).toBe(41);
   });
 
   it("parses felt-core's UTC times and drops a malformed report", () => {

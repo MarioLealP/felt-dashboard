@@ -5,13 +5,13 @@ export const PAGES = ["talk", "margins", "diary", "lists", "systems"] as const;
 export type PageName = (typeof PAGES)[number];
 
 export function pageFromHash(hash: string): PageName {
-  const name = hash.replace(/^#\/?/, "").split("/")[0] ?? "";
+  const name = hash.replace(/^#\/?/, "").split(/[/?]/)[0] ?? "";
   return (PAGES as readonly string[]).includes(name) ? (name as PageName) : "talk";
 }
 
 /** The id after a section, e.g. #systems/12 -> 12 (an incident's details). */
 export function idFromHash(hash: string): number | null {
-  const id = hash.replace(/^#\/?/, "").split("/")[1];
+  const id = hash.replace(/^#\/?/, "").split("?")[0]?.split("/")[1];
   return id && /^\d+$/.test(id) ? Number(id) : null;
 }
 

@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 
+import { answerInTalk } from "@/lib/answer";
 import { useHashId } from "@/lib/route";
 import { useNotices } from "@/lib/stream";
 import { getIncident, getSystems, type IncidentDetails, type SystemsPage } from "@/lib/systemsApi";
 import { Details } from "@/pages/systems/Details";
 import { Overview } from "@/pages/systems/Overview";
+import { herWords } from "@/pages/systems/words";
 
 /** WP-42.5: the Systems flag - the overview, or one incident's details
  * (#systems/<id>). Refreshes on her alert lines and on reconnect. */
@@ -26,7 +28,17 @@ export function Systems() {
         }
         setPage(fresh);
       } else {
-        setDetails(await getIncident(which));
+        const found = await getIncident(which);
+        // a desktop pop-up's "ask Felt" (#systems/<id>?ask): straight to Talk
+        if (found && found.lineMessageId !== null && window.location.hash.endsWith("?ask")) {
+          answerInTalk({
+            id: found.lineMessageId,
+            content: herWords(found),
+            createdAt: found.lastAt,
+          });
+          return;
+        }
+        setDetails(found);
       }
       setError(null);
     } catch (e) {
