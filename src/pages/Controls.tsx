@@ -64,7 +64,7 @@ export function Controls() {
       <div className="thread flex min-h-0 flex-1 flex-col overflow-y-auto pr-16 pb-6">
         {data ? (
           <>
-            <div className="flex flex-col gap-3 pl-[calc(var(--margin)+14px)]">
+            <div className="flex flex-col gap-2 pl-[calc(var(--margin)+14px)]">
               <Tile
                 name="hide"
                 label="hide"
@@ -88,7 +88,7 @@ export function Controls() {
             <p className="font-hand m-0 pt-3 pl-[calc(var(--margin)+14px)] text-[15px] text-[#cfc5cd]">
               {desktopLine(data)}
             </p>
-            <section aria-label="How she is" className="flex flex-col gap-1 pt-5">
+            <section aria-label="How she is" className="flex flex-col pt-3">
               {PART_NAMES.map(([key, name]) => {
                 const up = data.parts[key];
                 return (
@@ -99,7 +99,7 @@ export function Controls() {
                         className={`mt-0.5 ml-auto block size-2 rounded-full ${up === null ? "bg-pencil" : up ? "bg-sage" : "bg-rasp"}`}
                       />
                     </Gutter>
-                    <span className="flex min-h-7 items-baseline gap-3 pl-3.5">
+                    <span className="flex min-h-6 items-baseline gap-3 pl-3.5">
                       <span className="w-24 text-[14px] font-black">{name}</span>
                       <span className="font-hand text-[14px] text-[#9a909c]">
                         {up === null ? "not set up" : up ? "up" : "down"}

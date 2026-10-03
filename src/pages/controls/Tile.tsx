@@ -138,7 +138,7 @@ export function Tile({
         setPreview(null);
       }}
       onWheel={wheel}
-      className={`relative flex h-24 w-full min-w-0 touch-none flex-col justify-between overflow-hidden rounded-[14px] p-3 text-left select-none ${value.on || preview !== null ? "text-[#2a2210]" : "text-ink bg-[#26232a]"}`}
+      className={`relative flex h-14 w-full min-w-0 touch-none items-center gap-3 overflow-hidden rounded-[14px] px-3 text-left select-none ${value.on || preview !== null ? "text-[#2a2210]" : "text-ink bg-[#26232a]"}`}
       style={value.on || preview !== null ? { background: "#d6bf9f" } : undefined}
     >
       <span
@@ -146,14 +146,14 @@ export function Tile({
         className="absolute inset-y-0 left-0 bg-[#e9d48c] transition-[width] duration-150"
         style={{ width: `${preview !== null ? fill * 100 : 0}%`, opacity: 0.55 }}
       />
-      <span className="relative flex items-center justify-between">
+      <span className="relative shrink-0">
         <Icon name={name} />
-        <span className="font-mono text-[10px]">{state}</span>
       </span>
-      <span className="relative flex flex-col">
-        <span className="text-base font-black">{label}</span>
-        <span className="font-hand text-xs opacity-75">{note}</span>
+      <span className="relative flex min-w-0 flex-1 flex-col leading-tight">
+        <span className="text-[15px] font-black">{label}</span>
+        <span className="font-hand truncate text-xs opacity-75">{note}</span>
       </span>
+      <span className="relative shrink-0 font-mono text-[10px]">{state}</span>
     </button>
   );
 }
