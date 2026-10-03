@@ -32,8 +32,9 @@ describe("Talk", () => {
     stubFetch(() => history);
     render(<Talk />);
     expect(await screen.findByText("On the list.")).toBeInTheDocument();
-    expect(screen.getByText("YOU")).toBeInTheDocument();
-    expect(screen.getByText("FELT")).toBeInTheDocument();
+    // the side says who's speaking; screen readers get a name
+    expect(screen.getByText("You:")).toBeInTheDocument();
+    expect(screen.getByText("Felt:")).toBeInTheDocument();
   });
 
   it("sends through /v1/app on the phone", async () => {

@@ -27,45 +27,54 @@ function loadAsides(set: (asides: AsidesData) => void) {
     .catch(() => {});
 }
 
+/** Her lines start at the margin with the time in the gutter; his sit on
+ * the right, time after the words (Mario 10-03: "left side messages are
+ * hers, right side are mine for the whole system"). The side says who's
+ * speaking, so there are no name labels; screen readers still get one. */
 function Line({ message, fresh }: { message: Message; fresh: boolean }) {
   const hers = message.role === "assistant";
   const notes = message.marks.filter((m) => m.note);
+  const words = splitByMarks(message.content, message.marks).map((part, i) =>
+    part.mark ? (
+      <Mark key={part.mark.id} mark={part.mark}>
+        {part.text}
+      </Mark>
+    ) : (
+      // eslint-disable-next-line react/no-array-index-key -- static split of one message, never reordered
+      <span key={i}>{part.text}</span>
+    ),
+  );
   return (
     <>
       {message.answering ? (
         // the aside of hers he answered, so the line reads in context later
-        <p className="font-hand text-salmon/80 m-0 ml-[calc(var(--margin)+14px)] text-[13px] leading-[19px] break-words">
+        <p className="font-hand text-salmon/80 m-0 ml-[calc(var(--margin)+14px+15%)] text-right text-[13px] leading-[19px] break-words">
           ↳ {message.answering.content}
         </p>
       ) : null}
-      <div className={`flex ${fresh ? "line-fresh" : ""}`}>
-        <Gutter>
-          <span
-            className={`font-display block text-[11px] font-black tracking-wide ${hers ? "text-sage" : "text-[#cbbfc8]"}`}
-          >
-            {hers ? "FELT" : "YOU"}
-          </span>
-          {time(message.createdAt)}
-        </Gutter>
-        <div
-          className={`min-w-0 pl-3.5 leading-[30px] break-words ${hers ? "text-ink text-base" : "text-ink-soft text-[15px]"}`}
-        >
-          {splitByMarks(message.content, message.marks).map((part, i) =>
-            part.mark ? (
-              <Mark key={part.mark.id} mark={part.mark}>
-                {part.text}
-              </Mark>
-            ) : (
-              // eslint-disable-next-line react/no-array-index-key -- static split of one message, never reordered
-              <span key={i}>{part.text}</span>
-            ),
-          )}
+      {hers ? (
+        <div className={`flex ${fresh ? "line-fresh" : ""}`}>
+          <Gutter>{time(message.createdAt)}</Gutter>
+          <div className="text-ink min-w-0 pl-3.5 text-base leading-[30px] break-words">
+            <span className="sr-only">Felt: </span>
+            {words}
+          </div>
         </div>
-      </div>
+      ) : (
+        <div
+          className={`text-ink-soft ml-[calc(var(--margin)+14px+15%)] min-w-0 text-right text-[15px] leading-[30px] break-words ${fresh ? "line-fresh" : ""}`}
+        >
+          <span className="sr-only">You: </span>
+          {words}
+          <span className="text-pencil ml-2 font-mono text-[9px] whitespace-nowrap">
+            {time(message.createdAt)}
+          </span>
+        </div>
+      )}
       {notes.map((m) => (
         <span
           key={`${m.id}-note`}
-          className={`font-hand ml-[calc(var(--margin)+104px)] block -rotate-3 text-sm text-[#ff8fa8] ${fresh ? "note-fresh" : ""}`}
+          className={`font-hand block -rotate-3 text-sm text-[#ff8fa8] ${hers ? "ml-[calc(var(--margin)+104px)]" : "pr-6 text-right"} ${fresh ? "note-fresh" : ""}`}
         >
           {m.note}
         </span>
@@ -233,9 +242,7 @@ export function Talk() {
           )}
           {writing ? (
             <div className="flex items-center">
-              <Gutter>
-                <span className="font-display text-sage text-[11px] font-black">FELT</span>
-              </Gutter>
+              <Gutter />
               <div className="font-hand flex items-center gap-2 pl-3.5 text-sm text-[#9a8f99]">
                 <svg
                   className="pen"
