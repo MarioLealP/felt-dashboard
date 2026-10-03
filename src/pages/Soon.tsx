@@ -1,24 +1,16 @@
 import { Gutter } from "@/components/Page";
 import type { PageName } from "@/lib/route";
 
-type Unbuilt = Exclude<PageName, "talk" | "margins" | "systems" | "lists" | "controls">;
+type Unbuilt = Exclude<
+  PageName,
+  "talk" | "margins" | "systems" | "lists" | "controls" | "settings"
+>;
 
 const NEXT: Record<Unbuilt, { title: string; ticket: string; line: string; more?: string[] }> = {
   diary: {
     title: "Our diary",
     ticket: "WP-42.4",
     line: "your morning brief on top, my note below. soon.",
-  },
-  settings: {
-    title: "Settings",
-    ticket: "later",
-    line: "things you tune about me once in a while.",
-    more: [
-      "the games I watch for news (WP-49)",
-      "the senders I keep quiet about (WP-43)",
-      "what I remember about you, yours to fix",
-      "on the desktop: every keybind, in one place",
-    ],
   },
 };
 

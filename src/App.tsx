@@ -8,6 +8,7 @@ import { Margins } from "@/pages/Margins";
 import { Soon } from "@/pages/Soon";
 import { Controls } from "@/pages/Controls";
 import { Lists } from "@/pages/Lists";
+import { Settings } from "@/pages/Settings";
 import { Systems } from "@/pages/Systems";
 import { Talk } from "@/pages/Talk";
 
@@ -36,6 +37,8 @@ export function App() {
         <Lists />
       ) : page === "controls" ? (
         <Controls />
+      ) : page === "settings" ? (
+        <Settings />
       ) : (
         <Soon page={page} />
       )}
