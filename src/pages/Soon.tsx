@@ -1,7 +1,7 @@
 import { Gutter } from "@/components/Page";
 import type { PageName } from "@/lib/route";
 
-type Unbuilt = Exclude<PageName, "talk" | "margins">;
+type Unbuilt = Exclude<PageName, "talk" | "margins" | "systems">;
 
 const NEXT: Record<Unbuilt, { title: string; ticket: string; line: string }> = {
   diary: {
@@ -13,11 +13,6 @@ const NEXT: Record<Unbuilt, { title: string; ticket: string; line: string }> = {
     title: "Lists",
     ticket: "WP-42.5",
     line: "the shopping list moves in here. the old page still works meanwhile.",
-  },
-  systems: {
-    title: "Systems",
-    ticket: "WP-42.5",
-    line: "server, backups, network. I'll tell you when something needs you.",
   },
 };
 

@@ -93,7 +93,7 @@ function parseList(data: unknown): Message[] {
   return Array.isArray(data) ? data.flatMap((row) => parseMessage(row) ?? []) : [];
 }
 
-async function call(path: string, init?: RequestInit): Promise<unknown> {
+export async function call(path: string, init?: RequestInit): Promise<unknown> {
   const response = await fetch(`/v1/app${path}`, { credentials: "same-origin", ...init });
   if (response.status === 401) {
     throw new Error("Your SSO session ended. Reload to sign in again.");

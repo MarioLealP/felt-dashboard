@@ -6,6 +6,7 @@ import { usePage } from "@/lib/route";
 import { useNotices } from "@/lib/stream";
 import { Margins } from "@/pages/Margins";
 import { Soon } from "@/pages/Soon";
+import { Systems } from "@/pages/Systems";
 import { Talk } from "@/pages/Talk";
 
 export function App() {
@@ -27,6 +28,8 @@ export function App() {
         <Talk />
       ) : page === "margins" ? (
         <Margins onUnreadChange={refreshUnread} />
+      ) : page === "systems" ? (
+        <Systems />
       ) : (
         <Soon page={page} />
       )}
