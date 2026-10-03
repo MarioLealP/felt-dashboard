@@ -7,21 +7,14 @@ import { useNotices } from "@/lib/stream";
 const ACT =
   "min-h-8 bg-transparent p-0 underline decoration-wavy decoration-[rgba(203,191,200,0.45)] underline-offset-[5px] hover:text-ink";
 
-// the other lists Mario planned (WP-42 decision 2); each arrives with its WP
-const LATER = [
-  { name: "games", line: "the games I watch for news. with WP-49." },
-  { name: "email noise", line: "the senders I keep quiet about. with WP-43." },
-  { name: "about you", line: "what I remember about you, yours to fix. later." },
-];
-
 function headline(items: Item[]): string {
   const left = items.filter((i) => !i.checked).length;
   if (left === 0) return items.length ? "all crossed off." : "nothing to buy.";
   return left === 1 ? "one thing to buy." : `${left} things to buy.`;
 }
 
-/** WP-42.5: the Lists flag - the shopping list moved in (Mario 10-02:
- * "the shopping list moves into the app"), and room for the others. */
+/** WP-42.5: the Lists flag - real lists only (Mario 10-03): the shopping
+ * list now, reminders with WP-46. Her settings have their own flag. */
 export function Lists() {
   const [items, setItems] = useState<Item[]>([]);
   const [draft, setDraft] = useState("");
@@ -112,20 +105,6 @@ export function Lists() {
               clear crossed off
             </button>
           ) : null}
-        </section>
-        <section aria-label="Coming" className="mt-6 flex flex-col gap-2">
-          {LATER.map((l) => (
-            <div key={l.name} className="flex">
-              <Gutter>
-                <span className="font-display text-[10px] font-black text-[#6f6672]">
-                  {l.name.toUpperCase()}
-                </span>
-              </Gutter>
-              <p className="font-hand m-0 pl-3.5 text-[14px] leading-[22px] text-[#6f6672]">
-                {l.line}
-              </p>
-            </div>
-          ))}
         </section>
         {error ? (
           <p className="font-hand text-rasp m-0 pt-3 pl-[calc(var(--margin)+14px)] text-sm">

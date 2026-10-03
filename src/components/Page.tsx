@@ -17,6 +17,8 @@ const FLAGS: FlagSpec[] = [
   { page: "diary", label: "diary", bg: "#8aa886", fg: "#10170f", tilt: "-0.8deg" },
   { page: "lists", label: "lists", bg: "#e9d48c", fg: "#2a2210", tilt: "0.6deg" },
   { page: "systems", label: "systems", bg: "#d8cfdc", fg: "#241c26", tilt: "1.4deg" },
+  { page: "settings", label: "settings", bg: "#5a5560", fg: "#f5f0f6", tilt: "-1deg" },
+  { page: "controls", label: "controls", bg: "#d6bf9f", fg: "#2a2210", tilt: "0.8deg" },
 ];
 
 const RINGS = Array.from({ length: 11 }, (_, i) => i);

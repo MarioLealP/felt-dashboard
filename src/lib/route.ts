@@ -1,7 +1,16 @@
 import { useEffect, useState } from "react";
 
-/** The notebook's sections, one per sticky flag (WP-42 decision 2). */
-export const PAGES = ["talk", "margins", "diary", "lists", "systems"] as const;
+/** The notebook's sections, one per sticky flag (WP-42 decision 2; settings
+ * and controls added 10-03). */
+export const PAGES = [
+  "talk",
+  "margins",
+  "diary",
+  "lists",
+  "systems",
+  "settings",
+  "controls",
+] as const;
 export type PageName = (typeof PAGES)[number];
 
 export function pageFromHash(hash: string): PageName {
