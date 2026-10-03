@@ -56,7 +56,9 @@ export function Systems() {
   }, [id]);
 
   useNotices((n) => {
-    if (n.type === "hello" || (n.type === "line" && n.kind === "alert")) void load();
+    if (n.type === "hello" || n.type === "systems" || (n.type === "line" && n.kind === "alert")) {
+      void load();
+    }
   });
 
   async function older() {

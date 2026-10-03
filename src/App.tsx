@@ -6,6 +6,7 @@ import { usePage } from "@/lib/route";
 import { useNotices } from "@/lib/stream";
 import { Margins } from "@/pages/Margins";
 import { Soon } from "@/pages/Soon";
+import { Lists } from "@/pages/Lists";
 import { Systems } from "@/pages/Systems";
 import { Talk } from "@/pages/Talk";
 
@@ -30,6 +31,8 @@ export function App() {
         <Margins onUnreadChange={refreshUnread} />
       ) : page === "systems" ? (
         <Systems />
+      ) : page === "lists" ? (
+        <Lists />
       ) : (
         <Soon page={page} />
       )}

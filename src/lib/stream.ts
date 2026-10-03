@@ -9,6 +9,8 @@ export type Notice =
   | { type: "line"; id: number; role: "user" | "assistant"; kind: string }
   | { type: "asides" }
   | { type: "marks" }
+  | { type: "lists" }
+  | { type: "systems" }
   | { type: "hello" };
 
 type Listener = (notice: Notice) => void;
@@ -34,6 +36,8 @@ function open() {
   });
   source.addEventListener("asides", () => emit({ type: "asides" }));
   source.addEventListener("marks", () => emit({ type: "marks" }));
+  source.addEventListener("lists", () => emit({ type: "lists" }));
+  source.addEventListener("systems", () => emit({ type: "systems" }));
 }
 
 export function subscribe(listener: Listener): () => void {
