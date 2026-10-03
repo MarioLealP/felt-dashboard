@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { answerInTalk } from "@/lib/answer";
-import { type RawAlert, rawAlerts, savedLogin } from "@/lib/ntfy";
+import type { RawAlert } from "@/lib/ntfy";
 import { useHashId } from "@/lib/route";
 import { useNotices } from "@/lib/stream";
 import { getIncident, getSystems, type IncidentDetails, type SystemsPage } from "@/lib/systemsApi";
@@ -53,13 +53,10 @@ export function Systems() {
         setError(message);
         return;
       }
-      const login = savedLogin();
-      try {
-        setRaw(login ? await rawAlerts(login) : null);
-        setError(null);
-      } catch (ntfyError) {
-        setError(`${message} ${(ntfyError as Error).message}`);
-      }
+      // no way in to ntfy from here yet (being redone without a stored
+      // credential): say so instead of a bare error
+      setRaw(null);
+      setError(null);
     }
   }
 

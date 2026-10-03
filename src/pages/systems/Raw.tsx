@@ -23,7 +23,8 @@ export function Raw({ alerts }: { alerts: RawAlert[] | null }) {
       <div className="thread flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-16 pb-6">
         {alerts === null ? (
           <p className="font-hand text-pencil m-0 pl-[calc(var(--margin)+14px)] text-sm">
-            connect this device to ntfy in settings to see the alerts here while I'm down.
+            I can't show the alerts while I'm down yet - that's being redone. the desktop pop-ups
+            still come straight from ntfy.
           </p>
         ) : alerts.length === 0 ? (
           <p className="font-hand text-pencil m-0 pl-[calc(var(--margin)+14px)] text-sm">

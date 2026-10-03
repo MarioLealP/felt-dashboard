@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 
 import { Gutter } from "@/components/Page";
 import { getSettings, setClaudeAlerts, type Settings as Data } from "@/lib/settingsApi";
-import { NtfyLogin } from "@/pages/settings/NtfyLogin";
 
 // what's coming here, each with its WP (Mario 10-03: settings = config)
 const LATER = [
@@ -91,7 +90,6 @@ export function Settings() {
             mail, calendar or photos - his sandbox can't see them.
           </p>
         </section>
-        <NtfyLogin />
         <section aria-label="Coming" className="flex flex-col pt-6">
           {LATER.map((line) => (
             <p

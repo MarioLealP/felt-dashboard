@@ -144,27 +144,14 @@ describe("Systems", () => {
     expect(pendingAnswer()?.id).toBe(41);
   });
 
-  it("falls back to the raw alerts from ntfy when felt-core is down", async () => {
-    localStorage.setItem("felt-ntfy", JSON.stringify({ user: "mario", password: "x" }));
-    const line = JSON.stringify({
-      id: "n1",
-      event: "message",
-      time: 1791104897,
-      title: "clockmost: something broke",
-      priority: 5,
-    });
+  it("says so instead of a bare error when felt-core is down", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn((url: string) =>
-        Promise.resolve(
-          url.startsWith("/v1/app") ? new Response("", { status: 502 }) : new Response(line),
-        ),
-      ),
+      vi.fn(() => Promise.resolve(new Response("", { status: 502 }))),
     );
     render(<Systems />);
     expect(await screen.findByText(/Felt isn't answering/)).toBeTruthy();
-    expect(screen.getByText("clockmost: something broke")).toBeTruthy();
-    localStorage.removeItem("felt-ntfy");
+    expect(screen.getByText(/being redone/)).toBeTruthy();
   });
 
   it("parses felt-core's UTC times and drops a malformed report", () => {
