@@ -17,8 +17,9 @@ const FLAGS: FlagSpec[] = [
   { page: "diary", label: "diary", bg: "#8aa886", fg: "#10170f", tilt: "-0.8deg" },
   { page: "lists", label: "lists", bg: "#e9d48c", fg: "#2a2210", tilt: "0.6deg" },
   { page: "systems", label: "systems", bg: "#d8cfdc", fg: "#241c26", tilt: "1.4deg" },
-  { page: "settings", label: "settings", bg: "#5a5560", fg: "#f5f0f6", tilt: "-1deg" },
   { page: "controls", label: "controls", bg: "#d6bf9f", fg: "#2a2210", tilt: "0.8deg" },
+  // always last (Mario 10-03)
+  { page: "settings", label: "settings", bg: "#5a5560", fg: "#f5f0f6", tilt: "-1deg" },
 ];
 
 const RINGS = Array.from({ length: 11 }, (_, i) => i);
@@ -52,7 +53,10 @@ export function Page({
       />
       <nav
         aria-label="Sections"
-        className="absolute top-24 right-0 z-10 flex flex-col items-end gap-[7px]"
+        // near the bottom, the most used lowest, where the thumb is (Mario
+        // 10-03: "flip the whole list and put it near the bottom, it's a
+        // better layout for phone"); above Talk's writing line
+        className="absolute right-0 bottom-[calc(96px+env(safe-area-inset-bottom,0px))] z-10 flex flex-col-reverse items-end gap-[7px]"
       >
         {FLAGS.map((flag, i) => {
           const active = flag.page === current;

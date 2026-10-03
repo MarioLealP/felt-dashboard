@@ -8,8 +8,8 @@ export const PAGES = [
   "diary",
   "lists",
   "systems",
-  "settings",
   "controls",
+  "settings",
 ] as const;
 export type PageName = (typeof PAGES)[number];
 
