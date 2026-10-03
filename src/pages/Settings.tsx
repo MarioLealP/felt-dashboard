@@ -66,7 +66,7 @@ export function Settings() {
             aria-label="Claude looks into alerts"
             disabled={!data}
             onClick={() => void flip()}
-            className="flex min-h-12 items-center gap-3 rounded-[14px] bg-[#26232a] px-3 text-left"
+            className="flex min-h-12 items-center gap-3 bg-transparent p-0 text-left"
           >
             <span className="flex min-w-0 flex-1 flex-col leading-tight">
               <span className="text-[15px] font-black">Claude looks into alerts</span>
