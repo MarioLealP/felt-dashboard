@@ -49,5 +49,12 @@ export function Mark({ mark, children }: { mark: MarkData; children: string }) {
       annotation.remove();
     };
   }, [mark.id, mark.type, mark.seen]);
-  return <span ref={ref}>{children}</span>;
+  // relative: rough-notation places its SVG next to the words, positioned
+  // against the nearest positioned box - this one, so the ink scrolls with
+  // the words instead of staying put on the page (Mario 10-03, Systems)
+  return (
+    <span className="relative">
+      <span ref={ref}>{children}</span>
+    </span>
+  );
 }

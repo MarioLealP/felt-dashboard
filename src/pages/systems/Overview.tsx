@@ -118,21 +118,22 @@ export function Overview({
           <p className="font-hand m-0 text-[15px] text-[#b9cdb5]">{headline(page)}</p>
         </div>
       </header>
+      {/* how things are stays put; only the history scrolls under it */}
+      <section aria-label="How things are" className="flex shrink-0 flex-col gap-1 pr-16">
+        {page.areas.map((area) => (
+          <AreaRow
+            key={area.name}
+            area={area}
+            circled={circled && circled.area === area.name ? circled : null}
+            onHandled={onHandled}
+          />
+        ))}
+      </section>
+      <div
+        aria-hidden="true"
+        className="mt-5 mr-16 mb-2 ml-[calc(var(--margin)+14px)] h-px shrink-0 bg-[#3a3440]"
+      />
       <div className="thread flex min-h-0 flex-1 flex-col overflow-y-auto pr-16 pb-6">
-        <section aria-label="How things are" className="flex flex-col gap-1">
-          {page.areas.map((area) => (
-            <AreaRow
-              key={area.name}
-              area={area}
-              circled={circled && circled.area === area.name ? circled : null}
-              onHandled={onHandled}
-            />
-          ))}
-        </section>
-        <div
-          aria-hidden="true"
-          className="mt-5 mb-2 ml-[calc(var(--margin)+14px)] h-px bg-[#3a3440]"
-        />
         <section aria-label="What happened" className="flex flex-col gap-3">
           {page.incidents.length === 0 ? (
             <p className="font-hand text-pencil m-0 pl-[calc(var(--margin)+14px)] text-sm">

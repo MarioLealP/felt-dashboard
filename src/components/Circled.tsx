@@ -37,5 +37,11 @@ export function Circled({ id, children }: { id: string; children: ReactNode }) {
       annotation.remove();
     };
   }, [id]);
-  return <span ref={ref}>{children}</span>;
+  // relative: rough-notation places its SVG next to the words, positioned
+  // against the nearest positioned box - this one, so it scrolls with them
+  return (
+    <span className="relative">
+      <span ref={ref}>{children}</span>
+    </span>
+  );
 }
