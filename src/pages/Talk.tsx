@@ -11,8 +11,10 @@ import {
   type Remark,
   say,
 } from "@/lib/appApi";
+import { clearPendingAnswer, pendingAnswer } from "@/lib/answer";
 import { trayBridge } from "@/lib/bridge";
 import { splitByMarks } from "@/lib/ink";
+import { useNotices } from "@/lib/stream";
 
 const time = (d: Date) => d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 const day = (d: Date) =>
@@ -80,7 +82,8 @@ export function Talk() {
   const [error, setError] = useState<string | null>(null);
   const [olderDone, setOlderDone] = useState(false);
   const [asides, setAsides] = useState<AsidesData>({ asides: [], more: 0 });
-  const [answering, setAnswering] = useState<Remark | null>(null);
+  // "answer her" on a Margins line lands here
+  const [answering, setAnswering] = useState<Remark | null>(pendingAnswer);
   const threadRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -113,6 +116,31 @@ export function Talk() {
       delete w.__feltReloadHistory;
     };
   }, []);
+
+  useEffect(() => {
+    if (pendingAnswer()) inputRef.current?.focus();
+    clearPendingAnswer();
+  }, []);
+
+  // live: her lines and marks show up without reopening Talk
+  useNotices((n) => {
+    if (n.type === "asides" || (n.type === "line" && n.kind !== "chat")) {
+      void loadAsides(setAsides);
+      return;
+    }
+    if (n.type === "hello" || n.type === "marks" || n.type === "line") {
+      if (n.type === "hello") void loadAsides(setAsides);
+      getHistory()
+        .then((page) =>
+          setMessages((prev) => {
+            const byId = new Map(prev.map((m) => [m.id, m]));
+            for (const m of page) byId.set(m.id, m);
+            return [...byId.values()].toSorted((a, b) => a.id - b.id);
+          }),
+        )
+        .catch(() => {});
+    }
+  });
 
   async function loadOlder() {
     const first = messages[0];

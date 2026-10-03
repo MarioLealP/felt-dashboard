@@ -20,10 +20,20 @@ const FLAGS: FlagSpec[] = [
 ];
 
 const RINGS = Array.from({ length: 11 }, (_, i) => i);
+const NO_BADGES: Partial<Record<PageName, number>> = {};
 
 /** The notebook page every section is written on: rings across the top,
  * the margin line, sticky flags on the right edge. */
-export function Page({ current, children }: { current: PageName; children: ReactNode }) {
+export function Page({
+  current,
+  badges = NO_BADGES,
+  children,
+}: {
+  current: PageName;
+  /** small counts on the flags, e.g. unread lines in the margins */
+  badges?: Partial<Record<PageName, number>>;
+  children: ReactNode;
+}) {
   return (
     <div className="relative mx-auto flex h-full max-w-[560px] flex-col">
       <div
@@ -61,6 +71,14 @@ export function Page({ current, children }: { current: PageName; children: React
               }
             >
               {flag.label}
+              {badges[flag.page] ? (
+                <span
+                  className="ml-1 font-mono text-[10px]"
+                  aria-label={`${badges[flag.page]} new`}
+                >
+                  {badges[flag.page]}
+                </span>
+              ) : null}
             </a>
           );
         })}

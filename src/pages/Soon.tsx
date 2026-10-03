@@ -1,12 +1,9 @@
 import { Gutter } from "@/components/Page";
 import type { PageName } from "@/lib/route";
 
-const NEXT: Record<Exclude<PageName, "talk">, { title: string; ticket: string; line: string }> = {
-  margins: {
-    title: "In the margins",
-    ticket: "WP-42.3",
-    line: "everything I say on my own lands here. not yet, though.",
-  },
+type Unbuilt = Exclude<PageName, "talk" | "margins">;
+
+const NEXT: Record<Unbuilt, { title: string; ticket: string; line: string }> = {
   diary: {
     title: "Our diary",
     ticket: "WP-42.4",
@@ -25,7 +22,7 @@ const NEXT: Record<Exclude<PageName, "talk">, { title: string; ticket: string; l
 };
 
 /** A page whose section isn't built yet, written in her hand. */
-export function Soon({ page }: { page: Exclude<PageName, "talk"> }) {
+export function Soon({ page }: { page: Unbuilt }) {
   const next = NEXT[page];
   return (
     <header className="flex pt-10 pr-16">

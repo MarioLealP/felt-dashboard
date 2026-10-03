@@ -126,3 +126,63 @@ export async function say(message: string, answering?: number): Promise<Message[
   })) as { messages?: unknown };
   return parseList(data.messages);
 }
+
+/** One of her lines in the Margins: anything she said that isn't the
+ * conversation itself. `source` is a short label ("remark", "song",
+ * "calendar_15", "email", "alarm"…). */
+export interface MarginLine {
+  id: number;
+  kind: string;
+  source: string;
+  content: string;
+  createdAt: Date;
+  read: boolean;
+}
+
+export function parseMarginLine(row: unknown): MarginLine | null {
+  const r = row as Record<string, unknown> | null;
+  if (
+    !r ||
+    typeof r.id !== "number" ||
+    typeof r.kind !== "string" ||
+    typeof r.content !== "string" ||
+    typeof r.created_at !== "string"
+  ) {
+    return null;
+  }
+  return {
+    id: r.id,
+    kind: r.kind,
+    source: typeof r.source === "string" ? r.source : r.kind,
+    content: r.content,
+    createdAt: new Date(r.created_at),
+    read: r.read === true,
+  };
+}
+
+export async function getMargins(before?: number): Promise<MarginLine[]> {
+  const query = before === undefined ? "" : `?before=${before}`;
+  const data = await call(`/margins${query}`);
+  return Array.isArray(data) ? data.flatMap((row) => parseMarginLine(row) ?? []) : [];
+}
+
+export async function getUnread(): Promise<number> {
+  const data = (await call("/margins/count")) as { unread?: unknown };
+  return typeof data.unread === "number" ? data.unread : 0;
+}
+
+export type MarginAction = "read" | "dismiss" | "snooze";
+
+export async function markMargins(
+  ids: number[],
+  action: MarginAction,
+  hours?: number,
+): Promise<number> {
+  if (ids.length === 0) return 0;
+  const data = (await call("/margins/mark", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(hours === undefined ? { ids, action } : { ids, action, hours }),
+  })) as { changed?: unknown };
+  return typeof data.changed === "number" ? data.changed : 0;
+}

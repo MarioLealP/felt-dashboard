@@ -1,9 +1,35 @@
+import { useEffect, useState } from "react";
+
 import { Page } from "@/components/Page";
+import { getUnread } from "@/lib/appApi";
+import { usePage } from "@/lib/route";
+import { useNotices } from "@/lib/stream";
+import { Margins } from "@/pages/Margins";
 import { Soon } from "@/pages/Soon";
 import { Talk } from "@/pages/Talk";
-import { usePage } from "@/lib/route";
 
 export function App() {
   const page = usePage();
-  return <Page current={page}>{page === "talk" ? <Talk /> : <Soon page={page} />}</Page>;
+  const [unread, setUnread] = useState(0);
+  const refreshUnread = () => {
+    getUnread()
+      .then(setUnread)
+      .catch(() => {});
+  };
+  useEffect(refreshUnread, []);
+  useNotices((n) => {
+    if (n.type === "hello" || (n.type === "line" && n.kind !== "chat")) refreshUnread();
+  });
+
+  return (
+    <Page current={page} badges={{ margins: unread }}>
+      {page === "talk" ? (
+        <Talk />
+      ) : page === "margins" ? (
+        <Margins onUnreadChange={refreshUnread} />
+      ) : (
+        <Soon page={page} />
+      )}
+    </Page>
+  );
 }

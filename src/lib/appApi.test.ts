@@ -1,6 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { getHistory, parseAsides, parseMessage, say } from "@/lib/appApi";
+import {
+  getHistory,
+  markMargins,
+  parseAsides,
+  parseMarginLine,
+  parseMessage,
+  say,
+} from "@/lib/appApi";
 
 const row = {
   id: 7,
@@ -88,5 +95,35 @@ describe("asides", () => {
     await say("a bit", 7);
     await say("hi");
     expect(bodies).toEqual([{ message: "a bit", answering: 7 }, { message: "hi" }]);
+  });
+});
+
+describe("margins", () => {
+  it("reads a line and drops malformed ones", () => {
+    const line = parseMarginLine({
+      id: 3,
+      kind: "event",
+      source: "song",
+      content: "Good song.",
+      created_at: "2026-10-03T09:00:00Z",
+      read: false,
+    });
+    expect(line?.source).toBe("song");
+    expect(line?.read).toBe(false);
+    expect(parseMarginLine({ id: "3" })).toBeNull();
+  });
+
+  it("marks in one call, and skips an empty list", async () => {
+    const bodies: unknown[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((_url: string, init?: RequestInit) => {
+        bodies.push(JSON.parse(String(init?.body)));
+        return Promise.resolve(new Response(JSON.stringify({ changed: 2 })));
+      }),
+    );
+    expect(await markMargins([1, 2], "snooze", 3)).toBe(2);
+    expect(await markMargins([], "read")).toBe(0);
+    expect(bodies).toEqual([{ ids: [1, 2], action: "snooze", hours: 3 }]);
   });
 });
