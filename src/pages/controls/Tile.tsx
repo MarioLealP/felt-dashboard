@@ -138,7 +138,7 @@ export function Tile({
         setPreview(null);
       }}
       onWheel={wheel}
-      className={`relative flex h-24 min-w-0 flex-1 touch-none flex-col justify-between overflow-hidden rounded-[14px] p-3 text-left select-none ${value.on || preview !== null ? "text-[#2a2210]" : "text-ink bg-[#26232a]"}`}
+      className={`relative flex h-24 w-full min-w-0 touch-none flex-col justify-between overflow-hidden rounded-[14px] p-3 text-left select-none ${value.on || preview !== null ? "text-[#2a2210]" : "text-ink bg-[#26232a]"}`}
       style={value.on || preview !== null ? { background: "#d6bf9f" } : undefined}
     >
       <span

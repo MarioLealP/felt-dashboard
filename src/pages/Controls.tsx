@@ -64,7 +64,7 @@ export function Controls() {
       <div className="thread flex min-h-0 flex-1 flex-col overflow-y-auto pr-16 pb-6">
         {data ? (
           <>
-            <div className="flex gap-3 pl-[calc(var(--margin)+14px)]">
+            <div className="flex flex-col gap-3 pl-[calc(var(--margin)+14px)]">
               <Tile
                 name="hide"
                 label="hide"
