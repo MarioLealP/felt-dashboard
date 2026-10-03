@@ -44,8 +44,9 @@ function readSeen(): Set<string> {
   }
 }
 
-/** Marks already seen on this device. (Moves server-side in WP-42.3 so it
- * holds across phone and desktop.) */
+/** Marks already seen on this device: a quick local answer, and a fallback
+ * when the server can't be told. The server's `seen` (WP-42.3) is what makes
+ * it hold across phone and desktop. */
 export const seenMarks = {
   has(id: string): boolean {
     return readSeen().has(id);

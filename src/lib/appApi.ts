@@ -10,6 +10,8 @@ export interface Mark {
   type: MarkType;
   quote: string;
   note?: string;
+  /** already drawn on some screen: show it inked, don't animate */
+  seen?: boolean;
 }
 
 /** One of her unprompted remarks (an "aside"), waiting in Talk to be answered. */
@@ -50,6 +52,7 @@ function asMarks(value: unknown): Mark[] {
             type: m.type as MarkType,
             quote: m.quote,
             ...(typeof m.note === "string" && m.note ? { note: m.note } : {}),
+            ...(m.seen === true ? { seen: true } : {}),
           },
         ]
       : [],
@@ -185,4 +188,25 @@ export async function markMargins(
     body: JSON.stringify(hours === undefined ? { ids, action } : { ids, action, hours }),
   })) as { changed?: unknown };
   return typeof data.changed === "number" ? data.changed : 0;
+}
+
+// marks drawn in the last moment, sent to the server together
+const seenQueue = new Set<string>();
+let seenTimer: ReturnType<typeof setTimeout> | null = null;
+
+/** Her ink was drawn here: tell the server, so no other screen animates it
+ * again. Batched; a failure just means another device may replay it. */
+export function reportSeen(markId: string) {
+  seenQueue.add(markId);
+  if (seenTimer) return;
+  seenTimer = setTimeout(() => {
+    seenTimer = null;
+    const ids = [...seenQueue];
+    seenQueue.clear();
+    void call("/marks/seen", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids }),
+    }).catch(() => {});
+  }, 500);
 }

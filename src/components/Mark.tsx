@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { annotate } from "rough-notation";
 
-import type { Mark as MarkData } from "@/lib/appApi";
+import { type Mark as MarkData, reportSeen } from "@/lib/appApi";
 import { inkDuration, seenMarks, withSeed } from "@/lib/ink";
 
 const COLOR: Record<MarkData["type"], string> = {
@@ -19,7 +19,7 @@ export function Mark({ mark, children }: { mark: MarkData; children: string }) {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const first = !seenMarks.has(mark.id);
+    const first = !mark.seen && !seenMarks.has(mark.id);
     const box = el.getBoundingClientRect();
     const annotation = withSeed(mark.id, () =>
       annotate(el, {
@@ -37,7 +37,10 @@ export function Mark({ mark, children }: { mark: MarkData; children: string }) {
     const timer = setTimeout(
       () => {
         withSeed(mark.id, () => annotation.show());
-        if (first) seenMarks.add(mark.id);
+        if (first) {
+          seenMarks.add(mark.id);
+          reportSeen(mark.id);
+        }
       },
       first ? 700 : 0,
     );
@@ -45,6 +48,6 @@ export function Mark({ mark, children }: { mark: MarkData; children: string }) {
       clearTimeout(timer);
       annotation.remove();
     };
-  }, [mark.id, mark.type]);
+  }, [mark.id, mark.type, mark.seen]);
   return <span ref={ref}>{children}</span>;
 }
