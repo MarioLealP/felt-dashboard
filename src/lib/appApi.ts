@@ -12,12 +12,27 @@ export interface Mark {
   note?: string;
 }
 
+/** One of her unprompted remarks (an "aside"), waiting in Talk to be answered. */
+export interface Remark {
+  id: number;
+  content: string;
+  createdAt: Date;
+}
+
 export interface Message {
   id: number;
   role: "user" | "assistant";
   content: string;
   createdAt: Date;
   marks: Mark[];
+  /** his line answering one of her asides: her remark */
+  answering?: Remark;
+}
+
+/** Her picks of the remarks since his last message, plus how many others. */
+export interface Asides {
+  asides: Remark[];
+  more: number;
 }
 
 const MARK_TYPES = new Set<string>(["circle", "underline", "strike-through", "box", "bracket"]);
@@ -41,6 +56,13 @@ function asMarks(value: unknown): Mark[] {
   );
 }
 
+function parseRemark(row: unknown): Remark | null {
+  const r = row as Record<string, unknown> | null;
+  if (!r || typeof r.id !== "number" || typeof r.content !== "string") return null;
+  if (typeof r.created_at !== "string") return null;
+  return { id: r.id, content: r.content, createdAt: new Date(r.created_at) };
+}
+
 /** Validates one row from felt-core; drops anything malformed. */
 export function parseMessage(row: unknown): Message | null {
   const r = row as Record<string, unknown> | null;
@@ -53,12 +75,14 @@ export function parseMessage(row: unknown): Message | null {
   ) {
     return null;
   }
+  const answering = parseRemark(r.answering);
   return {
     id: r.id,
     role: r.role,
     content: r.content,
     createdAt: new Date(r.created_at),
     marks: asMarks(r.marks),
+    ...(answering ? { answering } : {}),
   };
 }
 
@@ -82,11 +106,23 @@ export async function getHistory(before?: number): Promise<Message[]> {
   return parseList(await call(`/history${query}`));
 }
 
-export async function say(message: string): Promise<Message[]> {
+export function parseAsides(data: unknown): Asides {
+  const d = data as Record<string, unknown> | null;
+  const asides = Array.isArray(d?.asides) ? d.asides.flatMap((r) => parseRemark(r) ?? []) : [];
+  const more = typeof d?.more === "number" && d.more > 0 ? d.more : 0;
+  return { asides, more };
+}
+
+export async function getAsides(): Promise<Asides> {
+  return parseAsides(await call("/asides"));
+}
+
+/** `answering`: the id of the aside he's answering, if any. */
+export async function say(message: string, answering?: number): Promise<Message[]> {
   const data = (await call("/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message }),
+    body: JSON.stringify(answering === undefined ? { message } : { message, answering }),
   })) as { messages?: unknown };
   return parseList(data.messages);
 }

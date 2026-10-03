@@ -1,8 +1,16 @@
 import { type FormEvent, useEffect, useRef, useState } from "react";
 
+import { Asides } from "@/components/Asides";
 import { Mark } from "@/components/Mark";
 import { Gutter } from "@/components/Page";
-import { getHistory, type Message, say } from "@/lib/appApi";
+import {
+  type Asides as AsidesData,
+  getAsides,
+  getHistory,
+  type Message,
+  type Remark,
+  say,
+} from "@/lib/appApi";
 import { trayBridge } from "@/lib/bridge";
 import { splitByMarks } from "@/lib/ink";
 
@@ -10,11 +18,24 @@ const time = (d: Date) => d.toLocaleTimeString([], { hour: "2-digit", minute: "2
 const day = (d: Date) =>
   d.toLocaleDateString([], { weekday: "short", day: "numeric", month: "short" }).toUpperCase();
 
+/** Asides are extra: if they fail to load, Talk works without them. */
+function loadAsides(set: (asides: AsidesData) => void) {
+  return getAsides()
+    .then(set)
+    .catch(() => {});
+}
+
 function Line({ message, fresh }: { message: Message; fresh: boolean }) {
   const hers = message.role === "assistant";
   const notes = message.marks.filter((m) => m.note);
   return (
     <>
+      {message.answering ? (
+        // the aside of hers he answered, so the line reads in context later
+        <p className="font-hand text-salmon/80 m-0 ml-[calc(var(--margin)+14px)] text-[13px] leading-[19px] break-words">
+          ↳ {message.answering.content}
+        </p>
+      ) : null}
       <div className={`flex ${fresh ? "line-fresh" : ""}`}>
         <Gutter>
           <span
@@ -58,7 +79,10 @@ export function Talk() {
   const [writing, setWriting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [olderDone, setOlderDone] = useState(false);
+  const [asides, setAsides] = useState<AsidesData>({ asides: [], more: 0 });
+  const [answering, setAnswering] = useState<Remark | null>(null);
   const threadRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // The thread lays out bottom-up (flex-col-reverse), so the browser opens it
   // on the newest message by itself and keeps the position steady when older
@@ -77,9 +101,13 @@ export function Talk() {
         setMessages(page);
       });
     load().catch((e: unknown) => alive && setError((e as Error).message));
+    void loadAsides(setAsides);
     // the tray window reloads the conversation when it's shown again
     const w = window as unknown as { __feltReloadHistory?: () => void };
-    w.__feltReloadHistory = () => void load().catch(() => {});
+    w.__feltReloadHistory = () => {
+      void load().catch(() => {});
+      void loadAsides(setAsides);
+    };
     return () => {
       alive = false;
       delete w.__feltReloadHistory;
@@ -106,7 +134,9 @@ export function Talk() {
     setWriting(true);
     toBottom();
     try {
-      const bridge = trayBridge();
+      // answering an aside goes straight to /v1/app, which knows her remarks;
+      // the tray's text_chat doesn't carry that (yet), so it's silent there
+      const bridge = answering ? null : trayBridge();
       let added: Message[];
       if (bridge) {
         const result = await bridge.text_chat(text);
@@ -116,10 +146,12 @@ export function Talk() {
         added = latest.filter((m) => !known.has(m.id));
         setMessages(latest);
       } else {
-        added = await say(text);
+        added = await say(text, answering?.id);
         setMessages((prev) => [...prev, ...added]);
       }
       setFreshIds(new Set(added.map((m) => m.id)));
+      setAnswering(null);
+      void loadAsides(setAsides);
       toBottom();
     } catch (err) {
       setDraft(text);
@@ -160,6 +192,17 @@ export function Talk() {
           {messages.map((m) => (
             <Line key={m.id} message={m} fresh={freshIds.has(m.id)} />
           ))}
+          {writing ? null : (
+            <Asides
+              asides={asides.asides}
+              more={asides.more}
+              answering={answering?.id ?? null}
+              onAnswer={(remark) => {
+                setAnswering(remark);
+                inputRef.current?.focus();
+              }}
+            />
+          )}
           {writing ? (
             <div className="flex items-center">
               <Gutter>
@@ -192,6 +235,19 @@ export function Talk() {
       </div>
 
       <div aria-hidden="true" className="bg-rasp mt-1 h-px opacity-30" />
+      {answering ? (
+        <div className="font-hand text-salmon flex items-center gap-1.5 pt-1.5 pr-16 pl-[90px] text-[13px]">
+          <span className="min-w-0 flex-1 truncate">↳ re: {answering.content}</span>
+          <button
+            type="button"
+            onClick={() => setAnswering(null)}
+            aria-label="Don't answer this"
+            className="text-pencil hover:text-ink flex min-h-8 min-w-8 items-center justify-center bg-transparent text-base"
+          >
+            ×
+          </button>
+        </div>
+      ) : null}
       <form
         onSubmit={(e) => void send(e)}
         className="flex items-center gap-1.5 pt-2 pr-16 pb-[calc(22px+env(safe-area-inset-bottom,0px))] pl-[90px]"
@@ -201,9 +257,10 @@ export function Talk() {
         </label>
         <input
           id="say"
+          ref={inputRef}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          placeholder="write to her…"
+          placeholder={answering ? "answer her…" : "write to her…"}
           autoComplete="off"
           className="font-hand text-ink focus:border-rasp min-h-11 min-w-0 flex-1 border-0 border-b-[1.5px] border-[rgba(245,240,246,0.25)] bg-transparent px-0.5 text-[17px] outline-none"
         />

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { getHistory, parseMessage, say } from "@/lib/appApi";
+import { getHistory, parseAsides, parseMessage, say } from "@/lib/appApi";
 
 const row = {
   id: 7,
@@ -44,5 +44,49 @@ describe("the API client", () => {
   it("explains an expired SSO session", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("", { status: 401 })));
     await expect(say("hi")).rejects.toThrow(/SSO session/);
+  });
+});
+
+describe("asides", () => {
+  it("reads her picks and the count, tolerating junk", () => {
+    const got = parseAsides({
+      asides: [
+        { id: 7, content: "I have standards.", created_at: "2026-10-03T09:00:00Z" },
+        { id: "x" },
+      ],
+      more: 4,
+    });
+    expect(got.asides.map((a) => a.content)).toEqual(["I have standards."]);
+    expect(got.more).toBe(4);
+    expect(parseAsides([])).toEqual({ asides: [], more: 0 });
+    expect(parseAsides({ asides: [], more: -1 }).more).toBe(0);
+  });
+
+  it("keeps the aside a line answers", () => {
+    const m = parseMessage({
+      id: 9,
+      role: "user",
+      content: "a bit",
+      created_at: "2026-10-03T09:01:00Z",
+      marks: [],
+      answering: { id: 7, content: "Too specific?", created_at: "2026-10-03T09:00:00Z" },
+    });
+    expect(m?.answering?.content).toBe("Too specific?");
+    const plain = { id: 10, role: "user", content: "hi", created_at: "2026-10-03T09:02:00Z" };
+    expect(parseMessage({ ...plain, answering: null })?.answering).toBeUndefined();
+  });
+
+  it("sends the aside being answered", async () => {
+    const bodies: unknown[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((_url: string, init?: RequestInit) => {
+        bodies.push(JSON.parse(String(init?.body)));
+        return Promise.resolve(new Response(JSON.stringify({ messages: [] })));
+      }),
+    );
+    await say("a bit", 7);
+    await say("hi");
+    expect(bodies).toEqual([{ message: "a bit", answering: 7 }, { message: "hi" }]);
   });
 });
