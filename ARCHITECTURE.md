@@ -23,7 +23,7 @@ desktop-only felt-animation, a hard-coded session — are what WP-42.2 closed.
 | `src/pages/Talk.tsx` | the conversation as a transcript, paging back, sending |
 | `src/pages/Soon.tsx` | flags whose page isn't built yet (WP-42.3–42.5) |
 | `src/lib/appApi.ts` | `/v1/app/*` client + response validation |
-| `src/lib/bridge.ts` | the tray's pywebview bridge |
+| `src/lib/bridge.ts` | the tray bridge (`window.feltTray`, felt-tray-rust) |
 | `src/lib/ink.ts` | seeded randomness, plays-once memory, pen speed, quote splitting |
 | `src/lib/route.ts` | hash routing for the five flags |
 | `src/styles/notebook.css` | paper, rings, flags, keyframes, theme tokens |
