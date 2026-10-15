@@ -14,8 +14,8 @@ in WP-42 (design canvas and decisions: `Felt/docs/plans/impl/WP-42-felt-app.md`)
   forward-auth is the lock; the build holds **no token or address**.
 - **Phone and laptop:** Tauri shells that open the hosted app (WP-42.6).
 - **Desktop:** the tray's Felt window opens the hosted app. There, sending goes
-  through the tray (`window.pywebview.api.text_chat`) so she still speaks and
-  lip-syncs typed replies; elsewhere replies are text only.
+  through the tray (`window.feltTray.text_chat`, the Linux tray) so she still speaks and
+  (lip-syncs once the overlay is back) typed replies; elsewhere replies are text only.
 
 ## Stack
 

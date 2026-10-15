@@ -24,7 +24,7 @@ function stubFetch(handler: (url: string, init?: RequestInit) => unknown) {
 
 afterEach(() => {
   vi.unstubAllGlobals();
-  delete window.pywebview;
+  delete window.feltTray;
 });
 
 describe("Talk", () => {
@@ -56,7 +56,7 @@ describe("Talk", () => {
 
   it("goes through the tray when it's the desktop window", async () => {
     const textChat = vi.fn().mockResolvedValue({ ok: true });
-    window.pywebview = { api: { text_chat: textChat } };
+    window.feltTray = { text_chat: textChat };
     stubFetch(() => history);
     render(<Talk />);
     await screen.findByText("On the list.");
@@ -118,7 +118,7 @@ describe("Talk", () => {
 
     it("answering skips the tray, which can't carry it yet", async () => {
       const textChat = vi.fn().mockResolvedValue({ ok: true });
-      window.pywebview = { api: { text_chat: textChat } };
+      window.feltTray = { text_chat: textChat };
       stubFetch((url) => {
         if (url.endsWith("/chat")) return answered;
         return url.endsWith("/asides") ? asides : history;
