@@ -100,4 +100,20 @@ describe("Margins", () => {
     expect(window.location.hash).toBe("#talk");
     expect(pendingAnswer()?.content).toBe("Good song.");
   });
+  it("marks everything read, not just what's loaded", async () => {
+    const posted: unknown[] = [];
+    stubFetch(posted);
+    const onUnreadChange = vi.fn();
+    render(<Margins unread={1212} onUnreadChange={onUnreadChange} />);
+    await userEvent.click(await screen.findByRole("button", { name: "mark all 1212 read" }));
+    await waitFor(() => expect(posted).toContainEqual({ all: true, action: "read" }));
+    expect(onUnreadChange).toHaveBeenCalled();
+  });
+
+  it("has no mark-all button with nothing unread", async () => {
+    stubFetch([]);
+    render(<Margins unread={0} />);
+    await screen.findByText("Good song.");
+    expect(screen.queryByRole("button", { name: /mark all/ })).toBeNull();
+  });
 });
