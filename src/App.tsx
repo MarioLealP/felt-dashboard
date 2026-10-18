@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 import { Page } from "@/components/Page";
 import { getUnread } from "@/lib/appApi";
-import { usePage } from "@/lib/route";
+import { type PageName, usePage } from "@/lib/route";
 import { useNotices } from "@/lib/stream";
 import { Margins } from "@/pages/Margins";
 import { Soon } from "@/pages/Soon";
@@ -12,8 +12,11 @@ import { Settings } from "@/pages/Settings";
 import { Systems } from "@/pages/Systems";
 import { Talk } from "@/pages/Talk";
 
-export function App() {
-  const page = usePage();
+/** `pages`: the sections this build offers (default all) - Home Assistant's
+ * Felt panel only has Talk and Margins, HA does controls, lists and systems. */
+export function App({ pages }: { pages?: readonly PageName[] } = {}) {
+  const hashPage = usePage();
+  const page = !pages || pages.includes(hashPage) ? hashPage : "talk";
   const [unread, setUnread] = useState(0);
   const refreshUnread = () => {
     getUnread()
@@ -26,7 +29,7 @@ export function App() {
   });
 
   return (
-    <Page current={page} badges={{ margins: unread }}>
+    <Page current={page} pages={pages} badges={{ margins: unread }}>
       {page === "talk" ? (
         <Talk />
       ) : page === "margins" ? (

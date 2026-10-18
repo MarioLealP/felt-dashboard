@@ -8,3 +8,4 @@ coverage
 
 # Environment-specific config — never commit real values
 .env
+dist-panel
