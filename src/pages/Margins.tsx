@@ -1,7 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 
 import { Gutter } from "@/components/Page";
-import { getMargins, type MarginAction, type MarginLine, markMargins } from "@/lib/appApi";
+import {
+  getMargins,
+  type MarginAction,
+  type MarginLine,
+  markAllRead,
+  markMargins,
+} from "@/lib/appApi";
 import { answerInTalk } from "@/lib/answer";
 import { useNotices } from "@/lib/stream";
 
@@ -83,7 +89,14 @@ function Line({
 /** WP-42.3: everything she said on her own (Mario 10-02: Talk stays "only
  * the conversation"). Newest at the bottom like Talk; seen lines are marked
  * read after a moment, new ones keep their diamond for this visit. */
-export function Margins({ onUnreadChange }: { onUnreadChange?: () => void }) {
+export function Margins({
+  unread = 0,
+  onUnreadChange,
+}: {
+  /** unread lines overall (the flag's badge), not just the ones loaded */
+  unread?: number;
+  onUnreadChange?: () => void;
+}) {
   const [lines, setLines] = useState<MarginLine[]>([]);
   const [fresh, setFresh] = useState<Set<number>>(new Set());
   const [olderDone, setOlderDone] = useState(false);
@@ -92,10 +105,10 @@ export function Margins({ onUnreadChange }: { onUnreadChange?: () => void }) {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function noteUnread(page: MarginLine[]) {
-    const unread = page.filter((m) => !m.read).map((m) => m.id);
-    if (unread.length === 0) return;
-    setFresh((prev) => new Set([...prev, ...unread]));
-    for (const id of unread) toRead.current.add(id);
+    const unseen = page.filter((m) => !m.read).map((m) => m.id);
+    if (unseen.length === 0) return;
+    setFresh((prev) => new Set([...prev, ...unseen]));
+    for (const id of unseen) toRead.current.add(id);
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => {
       const ids = [...toRead.current];
@@ -148,6 +161,18 @@ export function Margins({ onUnreadChange }: { onUnreadChange?: () => void }) {
     }
   }
 
+  async function readAll() {
+    try {
+      await markAllRead();
+      toRead.current.clear();
+      setFresh(new Set());
+      setLines((prev) => prev.map((m) => ({ ...m, read: true })));
+      onUnreadChange?.();
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }
+
   const newCount = fresh.size;
   return (
     <>
@@ -164,6 +189,15 @@ export function Margins({ onUnreadChange }: { onUnreadChange?: () => void }) {
               ? "nothing new. I've been good."
               : `${newCount} new since you last looked.`}
           </p>
+          {unread > 0 ? (
+            <button
+              type="button"
+              onClick={() => void readAll()}
+              className="font-hand text-pencil min-h-9 self-start bg-transparent text-sm underline decoration-wavy underline-offset-4"
+            >
+              mark all {unread} read
+            </button>
+          ) : null}
         </div>
       </header>
       <div className="thread flex min-h-0 flex-1 flex-col-reverse overflow-y-auto">

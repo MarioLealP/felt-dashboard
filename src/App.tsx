@@ -14,7 +14,7 @@ import { Talk } from "@/pages/Talk";
 
 /** `pages`: the sections this build offers (default all) - Home Assistant's
  * Felt panel only has Talk and Margins, HA does controls, lists and systems. */
-export function App({ pages }: { pages?: readonly PageName[] } = {}) {
+export function App({ pages, onMenu }: { pages?: readonly PageName[]; onMenu?: () => void } = {}) {
   const hashPage = usePage();
   const page = !pages || pages.includes(hashPage) ? hashPage : "talk";
   const [unread, setUnread] = useState(0);
@@ -29,11 +29,11 @@ export function App({ pages }: { pages?: readonly PageName[] } = {}) {
   });
 
   return (
-    <Page current={page} pages={pages} badges={{ margins: unread }}>
+    <Page current={page} pages={pages} onMenu={onMenu} badges={{ margins: unread }}>
       {page === "talk" ? (
         <Talk />
       ) : page === "margins" ? (
-        <Margins onUnreadChange={refreshUnread} />
+        <Margins unread={unread} onUnreadChange={refreshUnread} />
       ) : page === "systems" ? (
         <Systems />
       ) : page === "lists" ? (

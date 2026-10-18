@@ -31,9 +31,12 @@ export function Page({
   current,
   pages,
   badges = NO_BADGES,
+  onMenu,
   children,
 }: {
   current: PageName;
+  /** inside Home Assistant on a phone: opens HA's sidebar (the panel has no HA toolbar) */
+  onMenu?: () => void;
   /** the flags to show (default all); the HA panel leaves out what HA does natively */
   pages?: readonly PageName[];
   /** small counts on the flags, e.g. unread lines in the margins */
@@ -54,6 +57,16 @@ export function Page({
         aria-hidden="true"
         className="bg-rasp pointer-events-none absolute top-0 bottom-0 left-[var(--margin)] w-[1.5px] opacity-60"
       />
+      {onMenu ? (
+        <button
+          type="button"
+          aria-label="Home Assistant menu"
+          onClick={onMenu}
+          className="text-ink-soft absolute top-[calc(4px+env(safe-area-inset-top,0px))] left-1 z-20 flex h-9 w-9 items-center justify-center text-xl"
+        >
+          ≡
+        </button>
+      ) : null}
       <nav
         aria-label="Sections"
         // near the bottom, the most used lowest, where the thumb is (Mario

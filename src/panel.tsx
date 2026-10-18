@@ -31,6 +31,14 @@ interface Hass {
 class FeltPanel extends HTMLElement {
   #hass: Hass | null = null;
   #root: Root | null = null;
+  #narrow = false;
+
+  /** HA: phone width, its sidebar is hidden - the page needs its own menu button */
+  set narrow(narrow: boolean) {
+    if (narrow === this.#narrow) return;
+    this.#narrow = narrow;
+    this.#render();
+  }
 
   set hass(hass: Hass) {
     // HA hands over a fresh object on every state change; the connection is the same
@@ -74,10 +82,28 @@ class FeltPanel extends HTMLElement {
     const container = document.createElement("div");
     container.id = "root";
     this.append(container);
+    // HA's iframe catches every same-origin link click and turns it into an HA
+    // route change; the notebook's flags are #hash links, so take those first
+    this.addEventListener("click", (e) => {
+      const href = (e.target as Element | null)?.closest?.("a")?.getAttribute("href");
+      if (href?.startsWith("#")) {
+        e.preventDefault();
+        window.location.hash = href;
+      }
+    });
     this.#root = createRoot(container);
-    this.#root.render(
+    this.#render();
+  }
+
+  #toggleMenu = () => {
+    // HA's iframe forwards this one to the real sidebar
+    this.dispatchEvent(new CustomEvent("hass-toggle-menu", { bubbles: true, composed: true }));
+  };
+
+  #render() {
+    this.#root?.render(
       <StrictMode>
-        <App pages={PAGES} />
+        <App pages={PAGES} onMenu={this.#narrow ? this.#toggleMenu : undefined} />
       </StrictMode>,
     );
   }

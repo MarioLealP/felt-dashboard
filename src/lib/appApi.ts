@@ -197,6 +197,16 @@ export async function markMargins(
   return typeof data.changed === "number" ? data.changed : 0;
 }
 
+/** "mark all read": every unread line in the Margins, not just the ones on screen. */
+export async function markAllRead(): Promise<number> {
+  const data = (await call("/margins/mark", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ all: true, action: "read" }),
+  })) as { changed?: unknown };
+  return typeof data.changed === "number" ? data.changed : 0;
+}
+
 // marks drawn in the last moment, sent to the server together
 const seenQueue = new Set<string>();
 let seenTimer: ReturnType<typeof setTimeout> | null = null;
