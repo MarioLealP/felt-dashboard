@@ -2,6 +2,8 @@
  * SSO, so requests carry the SSO cookie and nothing else: no token lives in
  * the built files. */
 
+import { getTransport } from "@/lib/transport";
+
 export type MarkType = "circle" | "underline" | "strike-through" | "box" | "bracket";
 
 /** Something she marked on a message: `quote` is the exact text she marked. */
@@ -94,6 +96,11 @@ function parseList(data: unknown): Message[] {
 }
 
 export async function call(path: string, init?: RequestInit): Promise<unknown> {
+  const transport = getTransport();
+  if (transport) {
+    const body = typeof init?.body === "string" ? (JSON.parse(init.body) as unknown) : undefined;
+    return transport.call(path, init?.method ?? "GET", body);
+  }
   const response = await fetch(`/v1/app${path}`, { credentials: "same-origin", ...init });
   if (response.status === 401) {
     throw new Error("Your SSO session ended. Reload to sign in again.");

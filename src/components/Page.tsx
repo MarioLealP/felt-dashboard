@@ -29,10 +29,13 @@ const NO_BADGES: Partial<Record<PageName, number>> = {};
  * the margin line, sticky flags on the right edge. */
 export function Page({
   current,
+  pages,
   badges = NO_BADGES,
   children,
 }: {
   current: PageName;
+  /** the flags to show (default all); the HA panel leaves out what HA does natively */
+  pages?: readonly PageName[];
   /** small counts on the flags, e.g. unread lines in the margins */
   badges?: Partial<Record<PageName, number>>;
   children: ReactNode;
@@ -58,7 +61,7 @@ export function Page({
         // better layout for phone"); above Talk's writing line
         className="absolute right-0 bottom-[calc(96px+env(safe-area-inset-bottom,0px))] z-10 flex flex-col-reverse items-end gap-[7px]"
       >
-        {FLAGS.map((flag, i) => {
+        {FLAGS.filter((flag) => !pages || pages.includes(flag.page)).map((flag, i) => {
           const active = flag.page === current;
           return (
             <a
