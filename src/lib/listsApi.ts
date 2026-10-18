@@ -1,9 +1,10 @@
 /** WP-42.5: the shopping list in the app. felt-core's existing
  * /v1/shopping-list routes (SSO-gated since the old phone page), same
- * origin, so the SSO cookie is all they need. */
+ * origin, so the SSO cookie is all they need. Since 2026-10-18 felt-core
+ * passes them through to Home Assistant's todo list, so ids are HA's uids. */
 
 export interface Item {
-  id: number;
+  id: string;
   text: string;
   checked: boolean;
 }
@@ -11,8 +12,8 @@ export interface Item {
 export function parseItems(data: unknown): Item[] {
   if (!Array.isArray(data)) return [];
   return data.flatMap((r: Record<string, unknown>) =>
-    typeof r?.id === "number" && typeof r.text === "string"
-      ? [{ id: r.id, text: r.text, checked: r.checked === true || r.checked === 1 }]
+    (typeof r?.id === "string" || typeof r?.id === "number") && typeof r.text === "string"
+      ? [{ id: String(r.id), text: r.text, checked: r.checked === true || r.checked === 1 }]
       : [],
   );
 }
@@ -37,11 +38,11 @@ export async function addItem(text: string): Promise<void> {
   });
 }
 
-export async function setChecked(id: number, checked: boolean): Promise<void> {
+export async function setChecked(id: string, checked: boolean): Promise<void> {
   await shopping(`/${id}?checked=${checked}`, { method: "PATCH" });
 }
 
-export async function removeItem(id: number): Promise<void> {
+export async function removeItem(id: string): Promise<void> {
   await shopping(`/${id}`, { method: "DELETE" });
 }
 
