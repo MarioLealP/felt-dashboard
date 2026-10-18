@@ -6,8 +6,8 @@ import { parseItems } from "@/lib/listsApi";
 import { Lists } from "@/pages/Lists";
 
 let items = [
-  { id: 1, text: "milk", checked: 0 },
-  { id: 2, text: "coffee", checked: 1 },
+  { id: "0e2d6f2e8b764d4ebcef36de5d99d0ab", text: "milk", checked: false },
+  { id: "1f3e7a3f9c875e5fcdf047ef6eaae1bc", text: "coffee", checked: true },
 ];
 
 function stubFetch(calls: string[]) {
@@ -23,8 +23,8 @@ function stubFetch(calls: string[]) {
 afterEach(() => {
   vi.unstubAllGlobals();
   items = [
-    { id: 1, text: "milk", checked: 0 },
-    { id: 2, text: "coffee", checked: 1 },
+    { id: "0e2d6f2e8b764d4ebcef36de5d99d0ab", text: "milk", checked: false },
+    { id: "1f3e7a3f9c875e5fcdf047ef6eaae1bc", text: "coffee", checked: true },
   ];
 });
 
@@ -49,16 +49,23 @@ describe("Lists", () => {
     await waitFor(() =>
       expect(calls.filter((c) => !c.startsWith("GET"))).toEqual([
         'POST /v1/shopping-list {"text":"eggs"}',
-        "PATCH /v1/shopping-list/1?checked=true",
-        "DELETE /v1/shopping-list/2",
+        "PATCH /v1/shopping-list/0e2d6f2e8b764d4ebcef36de5d99d0ab?checked=true",
+        "DELETE /v1/shopping-list/1f3e7a3f9c875e5fcdf047ef6eaae1bc",
         "DELETE /v1/shopping-list/checked",
       ]),
     );
   });
 
-  it("parses felt-core's rows", () => {
-    expect(parseItems([{ id: 3, text: "x", checked: 1 }, { nope: 1 }])).toEqual([
-      { id: 3, text: "x", checked: true },
+  it("parses felt-core's rows: HA uids, and old numeric ids", () => {
+    expect(
+      parseItems([
+        { id: "ab12", text: "x", checked: true },
+        { id: 3, text: "y", checked: 1 },
+        { nope: 1 },
+      ]),
+    ).toEqual([
+      { id: "ab12", text: "x", checked: true },
+      { id: "3", text: "y", checked: true },
     ]);
   });
 });
